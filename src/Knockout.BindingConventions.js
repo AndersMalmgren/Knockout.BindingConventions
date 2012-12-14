@@ -78,7 +78,7 @@
         var results = (funcNameRegex).exec(constructor.toString());
         var name = (results && results.length > 1) ? results[1] : undefined;
 
-        if (name === undefined) {
+        if (name === undefined || name == "Object") {
             var flagged = [];
             var nestedFind = function (root) {
                 if (
