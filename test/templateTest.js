@@ -9,6 +9,12 @@
         }
     }
 
+    MyApp.MyViewModel.prototype = {
+        constructor: MyApp.MyViewModel,  
+        test: function () {
+        }
+    };
+
     var templateTest = function (model, name) {
         var template = $("<script id='" + name + "' type='text/html'>Bound</script>");
 
@@ -29,7 +35,8 @@
     });
 
     test("When binding a template against a local variabel ViewModel when root is set", function () {
-        ko.bindingConventions.init({ roots: [MyApp]});
+        ko.bindingConventions.init({ roots: [MyApp] });
         templateTest(new MyApp.MyViewModel(), "MyView");
+        ko.bindingConventions.init({ roots: [window] });
     });
 })();

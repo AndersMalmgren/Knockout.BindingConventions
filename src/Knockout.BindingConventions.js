@@ -78,7 +78,7 @@
         var results = (funcNameRegex).exec(constructor.toString());
         var name = (results && results.length > 1) ? results[1] : undefined;
 
-        if (name === undefined || name == "Object") {
+        if (name === undefined) {
             var flagged = [];
             var nestedFind = function (root) {
                 if (
@@ -114,7 +114,13 @@
                 }
             }
 
-            name = nestedFind(defaults.roots);
+            ko.utils.arrayForEach(defaults.roots, function (root) {
+                name = nestedFind(root);
+                if (name !== undefined) {
+                    return false;
+                }
+            });
+
             for (var index in flagged) {
                 flagged[index].__fcnChecked = false;
             }
