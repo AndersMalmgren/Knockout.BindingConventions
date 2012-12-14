@@ -1,0 +1,1 @@
+Convention over configuration plugin for Knockout
