@@ -34,21 +34,27 @@
         if (element.tagName === "BUTTON" && typeof handler === "function") {
             var bindings = { click: handler };
 
-            for (var index in viewModel) {
-                if (viewModel[index] === handler) {
-                    var guard = viewModel["can" + index.substring(0, 1).toUpperCase() + index.substring(1)];
-                    if (guard !== undefined) {
-                        bindings.enable = guard;
-                    }
-                    break;
-                }
-            }
-
+            var member = findMemberName(handler, viewModel, bindingContext);
+            bindings.enable = member.model["can" + member.name.substring(0, 1).toUpperCase() + member.name.substring(1)]; ;
             ko.applyBindingsToNode(element, bindings, viewModel);
 
             return true;
         }
-    }
+    };
+
+    ko.bindingConventions.conventionBinders.options = function (injected, element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+        var options = ko.utils.unwrapObservable(valueAccessor());
+        if (element.tagName === "SELECT" && options.push) {
+            var binding = { options: options };
+            var member = findMemberName(valueAccessor(), viewModel, bindingContext);
+            var itemName = singularize(member.name);
+            binding.value = member.model["selected" + itemName.substring(0, 1).toUpperCase() + itemName.substring(1)];
+            binding.selectedOptions = member.model["selected" + member.name.substring(0, 1).toUpperCase() + member.name.substring(1)];
+
+            ko.applyBindingsToNode(element, binding, viewModel);
+            return true;
+        }
+    };
 
     ko.bindingConventions.conventionBinders.template = function (injected, element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
         if (!injected) {
@@ -66,6 +72,33 @@
             }
         }
     };
+
+    var pluralEndings = ["ies", "es", "s"];
+    var singularize = function (name) {
+        ko.utils.arrayForEach(pluralEndings, function (ending) {
+            if (name.endsWith(ending)) {
+                name = name.substring(0, name.length - ending.length);
+                return false;
+            }
+        });
+
+        return name;
+    };
+
+    var findMemberName = function (value, viewModel, bindingContext) {
+        var result = {};
+        ko.utils.arrayForEach([viewModel, bindingContext.$parent], function (model) {
+            for (var index in model) {
+                if (model[index] === value) {
+                    result.name = index;
+                    result.model = model;
+                    return false;
+                }
+            }
+        });
+
+        return result;
+    }
 
     var findConstructorName = function (instance) {
         var constructor = instance.constructor;
@@ -121,5 +154,5 @@
         }
         constructor.__fcnName = name;
         return name;
-    }
+    };
 })();
