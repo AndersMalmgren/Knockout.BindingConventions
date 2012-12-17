@@ -18,14 +18,61 @@
         conventionBinders: {}
     };
 
+    ko.conventionBindingProvider = function () {
+
+        this.orgBindingProvider = new ko.bindingProvider();
+        this.orgNodeHasBindings = this.orgBindingProvider.nodeHasBindings;
+        this.attribute = "data-name";
+        this.virtualAttribute = "ko name:";
+    };
+
+    ko.conventionBindingProvider.prototype = {
+        getMemberName: function (node) {
+            var name = undefined;
+
+            if (node.nodeType === 1) {
+                name = node.getAttribute(this.attribute);
+            }
+            else if (node.nodeType === 8) {
+                value = "" + node.nodeValue || node.text;
+                index = value.indexOf(this.virtualAttribute);
+
+                if (index > -1) {
+                    name = value.substring(index + this.virtualAttribute.length).trim();
+                }
+            }
+
+            return name;
+        },
+        nodeHasBindings: function (node) {
+            return this.orgNodeHasBindings(node) || this.getMemberName(node) !== undefined;
+        },
+        getBindings: function (node, bindingContext) {
+            var name = this.getMemberName(node);
+
+            var result = this.orgBindingProvider.getBindings(node, bindingContext);
+            if (name !== undefined) {
+                result = result || {};
+                result.coc = { data: bindingContext.$data[name], member: name };
+            }
+
+            return result;
+        }
+    };
+
+    ko.bindingProvider.instance = new ko.conventionBindingProvider();
+
     ko.bindingHandlers.coc = {
         init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-            var unwrapped = ko.utils.unwrapObservable(valueAccessor());
+            var value = valueAccessor();
+
+            var unwrapped = ko.utils.unwrapObservable(value.member ? value.data : valueAccessor());
+            valueAccessor = value.member ? function () { return value.data } : valueAccessor;
             var type = typeof unwrapped;
 
             for (var index in ko.bindingConventions.conventionBinders) {
                 if (typeof ko.bindingConventions.conventionBinders[index] === "function") {
-                    var result = ko.bindingConventions.conventionBinders[index](unwrapped, type, element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
+                    var result = ko.bindingConventions.conventionBinders[index](unwrapped, type, value.member, element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
                     if (result !== undefined) {
                         return result;
                     }
@@ -33,22 +80,25 @@
             }
         }
     };
+    ko.virtualElements.allowedBindings.coc = true;
 
-    ko.bindingConventions.conventionBinders.button = function (unwrapped, type, element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+    ko.bindingConventions.conventionBinders.button = function (unwrapped, type, member, element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
         if (element.tagName === "BUTTON" && type === "function") {
             var bindings = { click: unwrapped };
-            var member = findMemberName(unwrapped, viewModel, bindingContext);
-            bindings.enable = member.model["can" + member.name.substring(0, 1).toUpperCase() + member.name.substring(1)];
+            var member = findMemberName(member, unwrapped, viewModel, bindingContext);
+            var guard = member.model["can" + member.name.substring(0, 1).toUpperCase() + member.name.substring(1)];
+            if(guard !== undefined)
+                bindings.enable = guard;
 
             return ko.applyBindingsToNode(element, bindings, viewModel);
         }
     };
 
-    ko.bindingConventions.conventionBinders.options = function (unwrapped, type, element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+    ko.bindingConventions.conventionBinders.options = function (unwrapped, type, member, element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
         var options = unwrapped;
         if (element.tagName === "SELECT" && options.push) {
             var binding = { options: options };
-            var member = findMemberName(valueAccessor(), viewModel, bindingContext);
+            var member = findMemberName(member, valueAccessor(), viewModel, bindingContext);
             var itemName = singularize(member.name);
             binding.value = member.model["selected" + itemName.substring(0, 1).toUpperCase() + itemName.substring(1)];
             binding.selectedOptions = member.model["selected" + member.name.substring(0, 1).toUpperCase() + member.name.substring(1)];
@@ -57,7 +107,7 @@
         }
     };
 
-    ko.bindingConventions.conventionBinders.input = function (unwrapped, type, element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+    ko.bindingConventions.conventionBinders.input = function (unwrapped, type, member, element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
         if (element.tagName === "INPUT" || element.tagName === "TEXTAREA") {
             var value = valueAccessor();
             var binding = {};
@@ -72,7 +122,7 @@
         }
     };
 
-    ko.bindingConventions.conventionBinders.template = function (unwrapped, type, element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+    ko.bindingConventions.conventionBinders.template = function (unwrapped, type, member, element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
         if (type !== "object") return;
 
         var model = unwrapped;
@@ -101,7 +151,11 @@
         return name;
     };
 
-    var findMemberName = function (value, viewModel, bindingContext) {
+    var findMemberName = function (member, value, viewModel, bindingContext) {
+        if (member !== undefined) {
+            return { model: viewModel, name: member };
+        }
+
         var result = {};
         ko.utils.arrayForEach([viewModel, bindingContext.$parent], function (model) {
             for (var index in model) {

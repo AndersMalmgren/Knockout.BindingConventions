@@ -24,6 +24,8 @@
     test("When clicking on a button and guard accecpts it", function () {
         buttonTest(true, function (model, button) {
             button.click();
+
+            equal(button.is(":disabled"), false, "The guard should accept click");
             equal(model.clicked, 1, "The handler Should trigger");
         });
     });
@@ -37,6 +39,8 @@
     test("When clicking on a button without guard", function () {
         buttonTest(null, function (model, button) {
             button.click();
+
+            equal(button.is(":disabled"), false, "The guard should accept click");
             equal(model.clicked, 1, "The handler Should trigger");
         });
     });
