@@ -56,6 +56,21 @@
         }
     };
 
+    ko.bindingConventions.conventionBinders.input = function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+        if (element.tagName === "INPUT" || element.tagName === "TEXTAREA") {
+            var value = valueAccessor();
+            var binding = {};
+            if (typeof ko.utils.unwrapObservable(value) === "boolean") {
+                binding.attr = { type: "checkbox" };
+                binding.checked = value;                
+            } else {
+                binding.value = value;
+            }
+
+            return ko.applyBindingsToNode(element, binding, viewModel);            
+        }
+    };
+
     ko.bindingConventions.conventionBinders.template = function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
         var model = ko.utils.unwrapObservable(valueAccessor());
         var name = findConstructorName(model);
