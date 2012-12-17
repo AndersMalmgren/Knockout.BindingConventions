@@ -53,7 +53,7 @@
             var result = this.orgBindingProvider.getBindings(node, bindingContext);
             if (name != null) {
                 result = result || {};
-                result.coc = { data: bindingContext.$data[name], member: name };
+                result.coc = bindingContext[name] ? bindingContext[name] : { data: bindingContext.$data[name], member: name };
             }
 
             return result;
