@@ -28,7 +28,7 @@
 
     ko.conventionBindingProvider.prototype = {
         getMemberName: function (node) {
-            var name = undefined;
+            var name = null;
 
             if (node.nodeType === 1) {
                 name = node.getAttribute(this.attribute);
@@ -51,7 +51,7 @@
             var name = this.getMemberName(node);
 
             var result = this.orgBindingProvider.getBindings(node, bindingContext);
-            if (name !== undefined) {
+            if (name != null) {
                 result = result || {};
                 result.coc = { data: bindingContext.$data[name], member: name };
             }
