@@ -37,15 +37,15 @@
     ko.bindingConventions.conventionBinders.button = function (unwrapped, type, element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
         if (element.tagName === "BUTTON" && type === "function") {
             var bindings = { click: unwrapped };
-
             var member = findMemberName(unwrapped, viewModel, bindingContext);
-            bindings.enable = member.model["can" + member.name.substring(0, 1).toUpperCase() + member.name.substring(1)]; ;
+            bindings.enable = member.model["can" + member.name.substring(0, 1).toUpperCase() + member.name.substring(1)];
+
             return ko.applyBindingsToNode(element, bindings, viewModel);
         }
     };
 
     ko.bindingConventions.conventionBinders.options = function (unwrapped, type, element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-        var options = ko.utils.unwrapObservable(valueAccessor());
+        var options = unwrapped;
         if (element.tagName === "SELECT" && options.push) {
             var binding = { options: options };
             var member = findMemberName(valueAccessor(), viewModel, bindingContext);
@@ -61,7 +61,7 @@
         if (element.tagName === "INPUT" || element.tagName === "TEXTAREA") {
             var value = valueAccessor();
             var binding = {};
-            if (typeof ko.utils.unwrapObservable(value) === "boolean") {
+            if (type === "boolean") {
                 binding.attr = { type: "checkbox" };
                 binding.checked = value;
             } else {
@@ -73,7 +73,9 @@
     };
 
     ko.bindingConventions.conventionBinders.template = function (unwrapped, type, element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-        var model = ko.utils.unwrapObservable(valueAccessor());
+        if (type !== "object") return;
+
+        var model = unwrapped;
         var name = findConstructorName(model);
         var modelEndsWith = "Model";
         if (name !== undefined && name.endsWith(modelEndsWith)) {
