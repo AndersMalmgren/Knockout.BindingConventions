@@ -20,29 +20,30 @@
 
     ko.bindingHandlers.coc = {
         init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-            var injected = false;
+
             for (var index in ko.bindingConventions.conventionBinders) {
                 if (typeof ko.bindingConventions.conventionBinders[index] === "function") {
-                    injected |= ko.bindingConventions.conventionBinders[index](injected, element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) || false;
+                    var result = ko.bindingConventions.conventionBinders[index](element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
+                    if (result !== undefined) {
+                        return result;
+                    }
                 }
             }
         }
     };
 
-    ko.bindingConventions.conventionBinders.button = function (injected, element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+    ko.bindingConventions.conventionBinders.button = function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
         var handler = valueAccessor();
         if (element.tagName === "BUTTON" && typeof handler === "function") {
             var bindings = { click: handler };
 
             var member = findMemberName(handler, viewModel, bindingContext);
             bindings.enable = member.model["can" + member.name.substring(0, 1).toUpperCase() + member.name.substring(1)]; ;
-            ko.applyBindingsToNode(element, bindings, viewModel);
-
-            return true;
+            return ko.applyBindingsToNode(element, bindings, viewModel);
         }
     };
 
-    ko.bindingConventions.conventionBinders.options = function (injected, element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+    ko.bindingConventions.conventionBinders.options = function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
         var options = ko.utils.unwrapObservable(valueAccessor());
         if (element.tagName === "SELECT" && options.push) {
             var binding = { options: options };
@@ -51,25 +52,22 @@
             binding.value = member.model["selected" + itemName.substring(0, 1).toUpperCase() + itemName.substring(1)];
             binding.selectedOptions = member.model["selected" + member.name.substring(0, 1).toUpperCase() + member.name.substring(1)];
 
-            ko.applyBindingsToNode(element, binding, viewModel);
-            return true;
+            return ko.applyBindingsToNode(element, binding, viewModel);
         }
     };
 
-    ko.bindingConventions.conventionBinders.template = function (injected, element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-        if (!injected) {
-            var model = ko.utils.unwrapObservable(valueAccessor());
-            var name = findConstructorName(model);
-            var modelEndsWith = "Model";
-            if (name !== undefined && name.endsWith(modelEndsWith)) {
-                name = name.substring(0, name.length - modelEndsWith.length);
-                if (!name.endsWith("View")) {
-                    name = name + "View";
-                }
-
-                ko.applyBindingsToNode(element, { template: { name: name, data: model} });
-                return true;
+    ko.bindingConventions.conventionBinders.template = function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+        var model = ko.utils.unwrapObservable(valueAccessor());
+        var name = findConstructorName(model);
+        var modelEndsWith = "Model";
+        if (name !== undefined && name.endsWith(modelEndsWith)) {
+            name = name.substring(0, name.length - modelEndsWith.length);
+            if (!name.endsWith("View")) {
+                name = name + "View";
             }
+
+            ko.applyBindingsToNode(element, { template: { name: name, data: model} }, model);
+            return { controlsDescendantBindings: true };
         }
     };
 

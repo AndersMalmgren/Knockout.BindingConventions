@@ -10,7 +10,7 @@
     }
 
     MyApp.MyViewModel.prototype = {
-        constructor: MyApp.MyViewModel,  
+        constructor: MyApp.MyViewModel,
         test: function () {
         }
     };
@@ -21,7 +21,7 @@
         $("body").append(template);
 
         ko.test("div", { coc: model }, function (element) {
-            equal("Bound", element.html(), "It should be able to bind remplate to model");
+            equal("Bound", element.html(), "It should be able to bind template to model");
             template.remove();
         });
     };
