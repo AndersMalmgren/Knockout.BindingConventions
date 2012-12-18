@@ -116,7 +116,7 @@
     ko.bindingConventions.conventionBinders.template = function (name, element, bindings, actualModel, type, element, model, viewModel, bindingContext) {
         if (type !== "object") return;
 
-        var className = actualModel ? findConstructorName(actualModel) : undefined;
+        var className = actualModel ? findConstructorName(actualModel.push ? actualModel[0] : actualModel) : undefined;
         var modelEndsWith = "Model";
         var template = null;
         if (className !== undefined && className.endsWith(modelEndsWith)) {
@@ -126,7 +126,13 @@
             }
         }
 
-        bindings.template = { name: template, data: model, 'if': model };
+        bindings.template = { name: template, 'if': model };
+        if (actualModel != null && actualModel.push) {
+            bindings.template.foreach = actualModel;
+        } else {
+            bindings.template.data = actualModel;
+        }
+
         return true;
     };
 

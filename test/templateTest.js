@@ -56,4 +56,11 @@
         templateTest(new MyApp.MyViewModel(), "MyView");
         ko.bindingConventions.init({ roots: [window] });
     });
+
+    test("When binding a template against a array of models", function () {
+        var model = { items: ko.observableArray([new MyApp.MyViewModel(), new MyApp.MyViewModel()]) };
+        templateTest(model, "MyView", "items", function (element) {
+            equal(element.text(), "BoundBound", "It should bind all items");
+        });
+    });
 })();
