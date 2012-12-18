@@ -11,9 +11,16 @@
         this.selectedOptions = ko.observable();
     };
 
-    var optionsTest = function (assert, model, multi) {
-        var model = model !== undefined ? new model() : new OptionsViewModel();
-        ko.test("select", { coc: model.options }, function (select, args) {
+    CompanyViewModel = function () {
+        this.companies = ko.observableArray(["1", "2", "3"]);
+        this.selectedCompany = ko.observable();
+    };
+
+    var optionsTest = function (assert, model, multi, options) {
+        var model = model ? new model : new OptionsViewModel();
+        options = options ? model[options] : model.options;
+
+        ko.test("select", { coc: options }, function (select, args) {
             select.attr("multiple", multi !== undefined);
             assert(select, model);
         }, model);
@@ -40,5 +47,13 @@
             select.change();
             equal(model.selectedOptions().length, selected.length, "It should be reflected on model");
         }, MultiOptionsViewModel, true);
+    });
+
+    test("When collection name ends with compan(ies)", function () {
+        optionsTest(function (select, model) {
+            select.val("3");
+            select.change();
+            equal(model.selectedCompany(), "3", "It should be reflected on model");
+        }, CompanyViewModel, false, 'companies');
     });
 })();

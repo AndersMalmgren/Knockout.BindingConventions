@@ -87,7 +87,7 @@
             var bindings = { click: unwrapped };
             var member = findMemberName(member, unwrapped, viewModel, bindingContext);
             var guard = member.model["can" + member.name.substring(0, 1).toUpperCase() + member.name.substring(1)];
-            if(guard !== undefined)
+            if (guard !== undefined)
                 bindings.enable = guard;
 
             return ko.applyBindingsToNode(element, bindings, viewModel);
@@ -139,11 +139,14 @@
         }
     };
 
-    var pluralEndings = ["ies", "es", "s"];
+    var pluralEndings = [{ end: "ies", use: "y" }, "es", "s"];
     var singularize = function (name) {
-        ko.utils.arrayForEach(pluralEndings, function (ending) {
+        arrayForEach(pluralEndings, function (ending) {
+            append = ending.use;
+            ending = ending.end || ending;
             if (name.endsWith(ending)) {
                 name = name.substring(0, name.length - ending.length);
+                name = name + (append || "");
                 return false;
             }
         });
@@ -157,7 +160,7 @@
         }
 
         var result = {};
-        ko.utils.arrayForEach([viewModel, bindingContext.$parent], function (model) {
+        arrayForEach([viewModel, bindingContext.$parent], function (model) {
             for (var index in model) {
                 if (model[index] === value) {
                     result.name = index;
@@ -169,6 +172,12 @@
 
         return result;
     }
+
+    var arrayForEach = function (array, action) {
+        for (var i = 0; i < array.length; i++) {
+            if (action(array[i]) === false) break;
+        }
+    };
 
     var findConstructorName = function (instance) {
         var constructor = instance.constructor;
@@ -217,7 +226,7 @@
                 }
             }
 
-            ko.utils.arrayForEach(defaults.roots, function (root) {
+            arrayForEach(defaults.roots, function (root) {
                 name = nestedFind(root);
                 if (name !== undefined) {
                     return false;
