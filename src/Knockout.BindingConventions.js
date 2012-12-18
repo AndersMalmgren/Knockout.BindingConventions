@@ -116,17 +116,18 @@
     ko.bindingConventions.conventionBinders.template = function (name, element, bindings, actualModel, type, element, model, viewModel, bindingContext) {
         if (type !== "object") return;
 
-        var className = findConstructorName(actualModel);
+        var className = actualModel ? findConstructorName(actualModel) : undefined;
         var modelEndsWith = "Model";
+        var template = null;
         if (className !== undefined && className.endsWith(modelEndsWith)) {
             var template = className.substring(0, className.length - modelEndsWith.length);
             if (!template.endsWith("View")) {
                 template = template + "View";
             }
-
-            bindings.template = { name: template, data: model };
-            return true;
         }
+
+        bindings.template = { name: template, data: model, 'if': model };
+        return true;
     };
 
     var pluralEndings = [{ end: "ies", use: "y" }, "es", "s"];

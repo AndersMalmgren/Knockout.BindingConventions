@@ -15,15 +15,17 @@
         }
     };
 
-    var templateTest = function (model, name) {
+    var templateTest = function (model, name, convention, assert) {
         var template = $("<script id='" + name + "' type='text/html'>Bound</script>");
 
         $("body").append(template);
 
-        ko.test("div", "$data", model, function (element) {
-            equal("Bound", element.html(), "It should be able to bind template to model");
+        var test = function (element) {
+            assert ? assert(element) : equal("Bound", element.html(), "It should be able to bind template to model");
             template.remove();
-        });
+        };
+
+        ko.test("div", convention || "$data", model, test);
     };
 
     test("When binding a template against a Hoisted function ViewModel", function () {
@@ -32,6 +34,21 @@
 
     test("When binding a template against a local variabel ViewModel", function () {
         templateTest(new MyApp.MyViewModel(), "MyView");
+    });
+
+    test("When binding a template against a null data", function () {
+        templateTest({ nullModel: ko.observable(null) }, "MyView", "nullModel", function () {
+            ok(true, "It should not crash due to null value");
+        });
+    });
+
+    test("When binding a template against a null data and then setting model", function () {
+        var model = { nullModel: ko.observable(null) };
+        templateTest(model, "MyView", "nullModel", function (element) {
+            equal("", element.text(), "The view should reflect null value");
+            model.nullModel(new MyApp.MyViewModel());
+            equal("Bound", element.text(), "The view should reflect bound value");
+        });
     });
 
     test("When binding a template against a local variabel ViewModel when root is set", function () {
