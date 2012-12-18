@@ -20,7 +20,7 @@
 
         $("body").append(template);
 
-        ko.test("div", { coc: model }, function (element) {
+        ko.test("div", "$data", model, function (element) {
             equal("Bound", element.html(), "It should be able to bind template to model");
             template.remove();
         });

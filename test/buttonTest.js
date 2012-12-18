@@ -16,9 +16,9 @@
 
     var buttonTest = function (canClick, assert) {
         var model = new ButtonTestViewModel(canClick);
-        ko.test("button", { coc: model.click }, function (button) {
+        ko.test("button", "click", model, function (button) {
             assert(model, button);
-        }, model);
+        });
     }
 
     test("When clicking on a button and guard accecpts it", function () {

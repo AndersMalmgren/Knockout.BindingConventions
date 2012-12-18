@@ -16,14 +16,14 @@
         this.selectedCompany = ko.observable();
     };
 
-    var optionsTest = function (assert, model, multi, options) {
+    var optionsTest = function (assert, model, multi, convention) {
         var model = model ? new model : new OptionsViewModel();
-        options = options ? model[options] : model.options;
+        convention = convention || "options"
 
-        ko.test("select", { coc: options }, function (select, args) {
+        ko.test("select", convention, model, function (select, args) {
             select.attr("multiple", multi !== undefined);
             assert(select, model);
-        }, model);
+        });
     };
 
     test("When binding a array against a select element", function () {

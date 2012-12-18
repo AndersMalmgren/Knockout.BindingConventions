@@ -8,7 +8,7 @@
 
     test("When binding against a input", function () {
         var model = new InputViewModel();
-        ko.test("input", { coc: model.value }, function (input) {
+        ko.test("input", "value", model, function (input) {
             input.val("test");
             input.change();
 
@@ -18,7 +18,7 @@
 
     test("When binding a boolean against a input", function () {
         var model = new InputViewModel();
-        ko.test("input", { coc: model.checked }, function (input, args) {
+        ko.test("input", "checked", model, function (input, args) {
             input.attr("checked", true)
             input.click();
 

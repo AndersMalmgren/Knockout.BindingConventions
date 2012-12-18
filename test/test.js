@@ -1,7 +1,9 @@
-ko.test = function (tag, binding, test, model) {
+ko.test = function (tag, convention, model, test) {
     var element = $("<" + tag + "/>");
+    element.attr("data-name", convention);
+
     element.appendTo("body");
-    ko.applyBindingsToNode(element[0], binding, model);
+    ko.applyBindings(model, element[0]);
     var args = {
         clean: function () {
             element.remove();

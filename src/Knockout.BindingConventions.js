@@ -53,89 +53,79 @@
             var result = this.orgBindingProvider.getBindings(node, bindingContext);
             if (name != null) {
                 result = result || {};
-                result.coc = bindingContext[name] ? bindingContext[name] : { data: bindingContext.$data[name], member: name };
+                setBindingsByConvention(name, node, bindingContext, result);
             }
 
             return result;
         }
     };
-
     ko.bindingProvider.instance = new ko.conventionBindingProvider();
 
-    ko.bindingHandlers.coc = {
-        init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-            var value = valueAccessor();
+    var setBindingsByConvention = function (name, element, bindingContext, bindings) {
+        var data = bindingContext[name] ? bindingContext[name] : bindingContext.$data[name];
+        var unwrapped = ko.utils.unwrapObservable(data);
+        var type = typeof unwrapped;
 
-            var unwrapped = ko.utils.unwrapObservable(value.member ? value.data : valueAccessor());
-            valueAccessor = value.member ? function () { return value.data } : valueAccessor;
-            var type = typeof unwrapped;
-
-            for (var index in ko.bindingConventions.conventionBinders) {
-                if (typeof ko.bindingConventions.conventionBinders[index] === "function") {
-                    var result = ko.bindingConventions.conventionBinders[index](unwrapped, type, value.member, element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
-                    if (result !== undefined) {
-                        return result;
-                    }
+        for (var index in ko.bindingConventions.conventionBinders) {
+            if (typeof ko.bindingConventions.conventionBinders[index] === "function") {
+                var result = ko.bindingConventions.conventionBinders[index](name, element, bindings, unwrapped, type, element, data, bindingContext.$data, bindingContext);
+                if (result === true) {
+                    return;
                 }
             }
         }
-    };
-    ko.virtualElements.allowedBindings.coc = true;
+    }
 
-    ko.bindingConventions.conventionBinders.button = function (unwrapped, type, member, element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+    ko.bindingConventions.conventionBinders.button = function (name, element, bindings, unwrapped, type, element, data, viewModel, bindingContext) {
         if (element.tagName === "BUTTON" && type === "function") {
-            var bindings = { click: unwrapped };
-            var member = findMemberName(member, unwrapped, viewModel, bindingContext);
-            var guard = member.model["can" + member.name.substring(0, 1).toUpperCase() + member.name.substring(1)];
+            bindings.click = unwrapped;
+
+            var guard = viewModel["can" + name.substring(0, 1).toUpperCase() + name.substring(1)];
             if (guard !== undefined)
                 bindings.enable = guard;
 
-            return ko.applyBindingsToNode(element, bindings, viewModel);
+            return true;
         }
     };
 
-    ko.bindingConventions.conventionBinders.options = function (unwrapped, type, member, element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-        var options = unwrapped;
+    ko.bindingConventions.conventionBinders.options = function (name, element, bindings, options, type, element, data, viewModel, bindingContext) {
         if (element.tagName === "SELECT" && options.push) {
-            var binding = { options: options };
-            var member = findMemberName(member, valueAccessor(), viewModel, bindingContext);
-            var itemName = singularize(member.name);
-            binding.value = member.model["selected" + itemName.substring(0, 1).toUpperCase() + itemName.substring(1)];
-            binding.selectedOptions = member.model["selected" + member.name.substring(0, 1).toUpperCase() + member.name.substring(1)];
+            bindings.options = options;
 
-            return ko.applyBindingsToNode(element, binding, viewModel);
+            var itemName = singularize(name);
+            bindings.value = viewModel["selected" + itemName.substring(0, 1).toUpperCase() + itemName.substring(1)];
+            bindings.selectedOptions = viewModel["selected" + name.substring(0, 1).toUpperCase() + name.substring(1)];
+
+            return true;
         }
     };
 
-    ko.bindingConventions.conventionBinders.input = function (unwrapped, type, member, element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+    ko.bindingConventions.conventionBinders.input = function (name, element, bindings, unwrapped, type, element, data, viewModel, bindingContext) {
         if (element.tagName === "INPUT" || element.tagName === "TEXTAREA") {
-            var value = valueAccessor();
-            var binding = {};
             if (type === "boolean") {
-                binding.attr = { type: "checkbox" };
-                binding.checked = value;
+                bindings.attr = { type: "checkbox" };
+                bindings.checked = data;
             } else {
-                binding.value = value;
+                bindings.value = data;
             }
 
-            return ko.applyBindingsToNode(element, binding, viewModel);
+            return true;
         }
     };
 
-    ko.bindingConventions.conventionBinders.template = function (unwrapped, type, member, element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+    ko.bindingConventions.conventionBinders.template = function (name, element, bindings, actualModel, type, element, model, viewModel, bindingContext) {
         if (type !== "object") return;
 
-        var model = unwrapped;
-        var name = findConstructorName(model);
+        var className = findConstructorName(actualModel);
         var modelEndsWith = "Model";
-        if (name !== undefined && name.endsWith(modelEndsWith)) {
-            name = name.substring(0, name.length - modelEndsWith.length);
-            if (!name.endsWith("View")) {
-                name = name + "View";
+        if (className !== undefined && className.endsWith(modelEndsWith)) {
+            var template = className.substring(0, className.length - modelEndsWith.length);
+            if (!template.endsWith("View")) {
+                template = template + "View";
             }
 
-            ko.applyBindingsToNode(element, { template: { name: name, data: model} }, model);
-            return { controlsDescendantBindings: true };
+            bindings.template = { name: template, data: model };
+            return true;
         }
     };
 
