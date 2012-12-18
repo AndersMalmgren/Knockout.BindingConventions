@@ -113,6 +113,13 @@
         }
     };
 
+    ko.bindingConventions.conventionBinders.foreach = function (name, element, bindings, array, type, element, data, viewModel, bindingContext) {
+        if (array && array.push && element.innerHTML != "") {
+            bindings.foreach = data;
+            return true;
+        }
+    }
+
     ko.bindingConventions.conventionBinders.template = function (name, element, bindings, actualModel, type, element, model, viewModel, bindingContext) {
         if (type !== "object") return;
 
