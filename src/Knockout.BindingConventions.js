@@ -65,96 +65,107 @@
         var data = bindingContext[name] ? bindingContext[name] : bindingContext.$data[name];
         var unwrapped = ko.utils.unwrapObservable(data);
         var type = typeof unwrapped;
+        var convention = null;
 
         for (var index in ko.bindingConventions.conventionBinders) {
-            if (typeof ko.bindingConventions.conventionBinders[index] === "function") {
-                var result = ko.bindingConventions.conventionBinders[index](name, element, bindings, unwrapped, type, element, data, bindingContext.$data, bindingContext);
-                if (result === true) {
+            if (typeof ko.bindingConventions.conventionBinders[index].rules !== undefined) {
+                convention = ko.bindingConventions.conventionBinders[index];
+                var should = true;
+                if (convention.rules.length == 1) {
+                    should = convention.rules[0](name, element, bindings, unwrapped, type, element, data, bindingContext.$data, bindingContext);
+                } else {
+                    arrayForEach(convention.rules, function (rule) {
+                        should = should && rule(name, element, bindings, unwrapped, type, element, data, bindingContext.$data, bindingContext);
+                    });
+                }
+
+                if (should) {
+                    convention.apply(name, element, bindings, unwrapped, type, element, data, bindingContext.$data, bindingContext);
                     return;
                 }
             }
         }
     }
 
-    ko.bindingConventions.conventionBinders.button = function (name, element, bindings, unwrapped, type, element, data, viewModel, bindingContext) {
-        if (element.tagName === "BUTTON" && type === "function") {
+    ko.bindingConventions.conventionBinders.button = {
+        rules: [function (name, element, bindings, unwrapped, type) { return element.tagName === "BUTTON" && type === "function"; } ],
+        apply: function (name, element, bindings, unwrapped, type, element, data, viewModel, bindingContext) {
             bindings.click = unwrapped;
 
             var guard = viewModel["can" + name.substring(0, 1).toUpperCase() + name.substring(1)];
             if (guard !== undefined)
                 bindings.enable = guard;
-
-            return true;
         }
     };
 
-    ko.bindingConventions.conventionBinders.options = function (name, element, bindings, options, type, element, data, viewModel, bindingContext) {
-        if (element.tagName === "SELECT" && options.push) {
+    ko.bindingConventions.conventionBinders.options = {
+        rules: [function (name, element, bindings, options) { return element.tagName === "SELECT" && options.push; } ],
+        apply: function (name, element, bindings, options, type, element, data, viewModel, bindingContext) {
             bindings.options = options;
 
             var itemName = singularize(name);
             bindings.value = viewModel["selected" + itemName.substring(0, 1).toUpperCase() + itemName.substring(1)];
             bindings.selectedOptions = viewModel["selected" + name.substring(0, 1).toUpperCase() + name.substring(1)];
-
-            return true;
         }
     };
 
-    ko.bindingConventions.conventionBinders.input = function (name, element, bindings, unwrapped, type, element, data, viewModel, bindingContext) {
-        if (element.tagName === "INPUT" || element.tagName === "TEXTAREA") {
+    ko.bindingConventions.conventionBinders.input = {
+        rules: [function (name, element) { return element.tagName === "INPUT" || element.tagName === "TEXTAREA"; } ],
+        apply: function (name, element, bindings, unwrapped, type, element, data, viewModel, bindingContext) {
             if (type === "boolean") {
                 bindings.attr = { type: "checkbox" };
                 bindings.checked = data;
             } else {
                 bindings.value = data;
             }
-
-            return true;
         }
     };
 
-    ko.bindingConventions.conventionBinders.visible = function (name, element, bindings, unwrapped, type, element, data, viewModel, bindingContext) {
-        if (type === "boolean" && element.tagName !== "INPUT") {
+    ko.bindingConventions.conventionBinders.visible = {
+        rules: [function (name, element, bindings, unwrapped, type) { return type === "boolean" && element.tagName !== "INPUT"; } ],
+        apply: function (name, element, bindings, unwrapped, type, element, data, viewModel, bindingContext) {
             bindings.visible = data;
-            return true;
         }
     };
 
-    ko.bindingConventions.conventionBinders.text = function (name, element, bindings, unwrapped, type, element, data, viewModel, bindingContext) {
-        if (type !== "object" && type !== "boolean" && element.tagName !== "INPUT" && element.tagName !== "TEXTAREA") {
+    ko.bindingConventions.conventionBinders.text = {
+        rules: [function (name, element, bindings, unwrapped, type) { return type !== "object" && type !== "boolean" && element.tagName !== "INPUT" && element.tagName !== "TEXTAREA" } ],
+        apply: function (name, element, bindings, unwrapped, type, element, data, viewModel, bindingContext) {
             bindings.text = data;
-            return true;
         }
     };
 
-    ko.bindingConventions.conventionBinders.foreach = function (name, element, bindings, array, type, element, data, viewModel, bindingContext) {
-        if (array && array.push && element.innerHTML != "") {
+    var forEachBound = {};
+    ko.bindingConventions.conventionBinders.foreach = {
+        rules: [function (name, element, bindings, array) { return forEachBound[element] || (array && array.push && element.innerHTML != ""); } ],
+        apply: function (name, element, bindings, array, type, element, data, viewModel, bindingContext) {
             bindings.foreach = data;
-            return true;
+            forEachBound[element] = true;
         }
-    }
+    };
 
-    ko.bindingConventions.conventionBinders.template = function (name, element, bindings, actualModel, type, element, model, viewModel, bindingContext) {
-        if (type !== "object" || (element.nodeType === 1 && element.innerHTML.trim() !== "")) return;
-
-        var className = actualModel ? findConstructorName(actualModel.push ? actualModel[0] : actualModel) : undefined;
-        var modelEndsWith = "Model";
-        var template = null;
-        if (className !== undefined && className.endsWith(modelEndsWith)) {
-            var template = className.substring(0, className.length - modelEndsWith.length);
-            if (!template.endsWith("View")) {
-                template = template + "View";
+    var templateBound = {};
+    ko.bindingConventions.conventionBinders.template = {
+        rules: [function (name, element, bindings, actualModel, type) { return forEachBound[element] || (type === "object" && (element.nodeType === 8 || element.innerHTML.trim() === "")); } ],
+        apply: function (name, element, bindings, actualModel, type, element, model, viewModel, bindingContext) {
+            var className = actualModel ? findConstructorName(actualModel.push ? actualModel[0] : actualModel) : undefined;
+            var modelEndsWith = "Model";
+            var template = null;
+            if (className !== undefined && className.endsWith(modelEndsWith)) {
+                var template = className.substring(0, className.length - modelEndsWith.length);
+                if (!template.endsWith("View")) {
+                    template = template + "View";
+                }
             }
-        }
 
-        bindings.template = { name: template, 'if': model };
-        if (actualModel != null && actualModel.push) {
-            bindings.template.foreach = actualModel;
-        } else {
-            bindings.template.data = actualModel;
+            bindings.template = { name: template, 'if': model };
+            if (actualModel != null && actualModel.push) {
+                bindings.template.foreach = actualModel;
+            } else {
+                bindings.template.data = actualModel;
+            }
+            templateBound[element] = true;
         }
-
-        return true;
     };
 
     var pluralEndings = [{ end: "ies", use: "y" }, "es", "s"];

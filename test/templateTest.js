@@ -21,7 +21,7 @@
         $("body").append(template);
 
         var test = function (element) {
-            assert ? assert(element) : equal("Bound", element.html(), "It should be able to bind template to model");
+            assert ? assert(element) : equal(element.html(), "Bound", "It should be able to bind template to model");
             template.remove();
         };
 
