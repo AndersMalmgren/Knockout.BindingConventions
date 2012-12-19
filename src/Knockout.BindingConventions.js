@@ -113,6 +113,20 @@
         }
     };
 
+    ko.bindingConventions.conventionBinders.visible = function (name, element, bindings, unwrapped, type, element, data, viewModel, bindingContext) {
+        if (type === "boolean" && element.tagName !== "INPUT") {
+            bindings.visible = data;
+            return true;
+        }
+    };
+
+    ko.bindingConventions.conventionBinders.text = function (name, element, bindings, unwrapped, type, element, data, viewModel, bindingContext) {
+        if (type !== "object" && type !== "boolean" && element.tagName !== "INPUT" && element.tagName !== "TEXTAREA") {
+            bindings.text = data;
+            return true;
+        }
+    };
+
     ko.bindingConventions.conventionBinders.foreach = function (name, element, bindings, array, type, element, data, viewModel, bindingContext) {
         if (array && array.push && element.innerHTML != "") {
             bindings.foreach = data;
@@ -121,7 +135,7 @@
     }
 
     ko.bindingConventions.conventionBinders.template = function (name, element, bindings, actualModel, type, element, model, viewModel, bindingContext) {
-        if (type !== "object") return;
+        if (type !== "object" || (element.nodeType === 1 && element.innerHTML.trim() !== "")) return;
 
         var className = actualModel ? findConstructorName(actualModel.push ? actualModel[0] : actualModel) : undefined;
         var modelEndsWith = "Model";
