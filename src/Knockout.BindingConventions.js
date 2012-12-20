@@ -50,7 +50,7 @@
         getBindings: function (node, bindingContext) {
             var name = this.getMemberName(node);
 
-            var result = this.orgBindingProvider.getBindings(node, bindingContext);
+            var result = ko.bindingHandlers[name] ? null : this.orgBindingProvider.getBindings(node, bindingContext);
             if (name != null) {
                 result = result || {};
                 setBindingsByConvention(name, node, bindingContext, result);
@@ -135,18 +135,24 @@
         }
     };
 
-    var forEachBound = {};
-    ko.bindingConventions.conventionBinders.foreach = {
-        rules: [function (name, element, bindings, array) { return forEachBound[element] || (array && array.push && element.innerHTML != ""); } ],
-        apply: function (name, element, bindings, array, type, element, data, viewModel, bindingContext) {
-            bindings.foreach = data;
-            forEachBound[element] = true;
+    ko.bindingConventions.conventionBinders["with"] = {
+        rules: [function (name, element, bindings, unwrapped, type) { return element.__withBound  || (element.__templateBound === undefined && type === "object" && unwrapped && unwrapped.push === undefined && nodeHasContent(element)); } ],
+        apply: function (name, element, bindings, unwrapped, type, element, data, viewModel, bindingContext) {
+            bindings["with"] = data;
+            element.__withBound = true;
         }
     };
 
-    var templateBound = {};
+    ko.bindingConventions.conventionBinders.foreach = {
+        rules: [function (name, element, bindings, array) { return element.__forEachBound || (array && array.push && element.innerHTML != ""); } ],
+        apply: function (name, element, bindings, array, type, element, data, viewModel, bindingContext) {
+            bindings.foreach = data;
+            element.__forEachBound = true;
+        }
+    };
+
     ko.bindingConventions.conventionBinders.template = {
-        rules: [function (name, element, bindings, actualModel, type) { return forEachBound[element] || (type === "object" && (element.nodeType === 8 || element.innerHTML.trim() === "")); } ],
+        rules: [function (name, element, bindings, actualModel, type) { return element.__templateBound || (element.__withBound === undefined && type === "object" && (element.nodeType === 8 || element.innerHTML.trim() === "")); } ],
         apply: function (name, element, bindings, actualModel, type, element, model, viewModel, bindingContext) {
             var className = actualModel ? findConstructorName(actualModel.push ? actualModel[0] : actualModel) : undefined;
             var modelEndsWith = "Model";
@@ -164,7 +170,7 @@
             } else {
                 bindings.template.data = actualModel;
             }
-            templateBound[element] = true;
+            element.__templateBound = true;
         }
     };
 
@@ -207,6 +213,11 @@
             if (action(array[i]) === false) break;
         }
     };
+
+    var nodeHasContent = function (node) {
+        return (node.nodeType === 8 && node.nextSibling.textContent.indexOf("/ko") === -1) ||
+            (node.nodeType === 1 && node.innerHTML !== "");
+    }
 
     var findConstructorName = function (instance) {
         var constructor = instance.constructor;
