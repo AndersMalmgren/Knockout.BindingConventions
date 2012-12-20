@@ -45,7 +45,7 @@
             return name;
         },
         nodeHasBindings: function (node) {
-            return this.orgNodeHasBindings(node) || this.getMemberName(node) !== undefined;
+            return this.orgNodeHasBindings(node) || this.getMemberName(node) !== null;
         },
         getBindings: function (node, bindingContext) {
             var name = this.getMemberName(node);
