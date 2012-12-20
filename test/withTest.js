@@ -26,9 +26,9 @@
         }
     });
 
-    var elementTest = function (insertTemplate, test) {
+    var elementTest = function (insertTemplate, test, nullModel) {
         var withTemplate = $(innerContent);
-        var model = new WithTestViewModel();
+        var model = nullModel ? null : new WithTestViewModel();
 
         var prepElement = function (element) {
             if (insertTemplate) {
@@ -36,7 +36,7 @@
             }
         }
 
-        ko.test("div", "with", { "with": model }, function (element) {
+        ko.test("div", "with", { "with": ko.observable(model) }, function (element) {
             test(element, model);
         }, prepElement);
     }
@@ -56,5 +56,11 @@
         catch (err) {
             ok(true, "It shoudl try to use the template binding");
         }
+    });
+
+    test("When 'with' binding null to a element with content", function () {
+        elementTest(true, function (element, model) {
+            ok(element[0].__withBound, "It should use the withg binding");
+        }, true);
     });
 })();
