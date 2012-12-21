@@ -15,6 +15,7 @@
     ko.bindingConventions = {
         init: function (options) {
             ko.utils.extend(defaults, options);
+            preCheckConstructorNames();
         },
         conventionBinders: {}
     };
@@ -225,6 +226,32 @@
         return (node.nodeType === 8 && node.nextSibling.textContent.indexOf("/ko") === -1) ||
             (node.nodeType === 1 && node.innerHTML !== "");
     }
+
+    var preCheckConstructorNames = function () {
+        var flagged = [];
+        var nestedPreCheck = function (root) {
+            if (root.__fcnChecked || root === window) return;
+
+            root.__fcnChecked = true;
+            if (root.__fcnChecked === undefined) return;
+            flagged.push(root);
+            for (var index in root) {
+                var item = root[index];
+                if (item !== undefined && index.endsWith("Model") && typeof item === "function") {
+                    item.__fcnName = index;
+                }
+                nestedPreCheck(item);
+            }
+        }
+
+        arrayForEach(defaults.roots, function (root) {
+            nestedPreCheck(root);
+        });
+
+        arrayForEach(flagged, function (flag) {
+            flag.__fcnChecked = undefined;
+        });
+    };
 
     var findConstructorName = function (instance) {
         var constructor = instance.constructor;

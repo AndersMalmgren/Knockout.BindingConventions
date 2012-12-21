@@ -87,6 +87,17 @@
       }
     });
 
+    MyApp.OOExtendedTwoViewModel = MyApp.OOExtendedViewModel.extend({
+      init: function(){
+      }
+    });
+
+    MyApp.NestedNameSpace = {};    
+    MyApp.NestedNameSpace.NestedViewModel = MyApp.OOExtendedViewModel.extend({
+      init: function(){
+      }
+    });
+
     var templateTest = function (model, name, convention, assert) {
         var template = $("<script id='" + name + "' type='text/html'>Bound</script>");
 
@@ -140,5 +151,11 @@
         ko.bindingConventions.init({ roots: [MyApp] });
         templateTest(new MyApp.OOExtendedViewModel(), "OOExtendedView");
         ko.bindingConventions.init({ roots: [window] });
+    });
+
+    test("When prechecking constructor names with a nested namespace",function() {
+        ko.bindingConventions.init({ roots: [MyApp] });
+        equal(MyApp.NestedNameSpace.NestedViewModel.__fcnName, "NestedViewModel", "It should add the constuctor name to the object");
+        ko.bindingConventions.init({ roots: [window] });        
     });
 })();
