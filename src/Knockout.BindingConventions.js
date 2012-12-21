@@ -8,7 +8,8 @@
     };
 
     var defaults = {
-        roots: [window]
+        roots: [window],
+        excludeConstructorNames: ["Class"]
     };
 
     ko.bindingConventions = {
@@ -236,7 +237,15 @@
         var results = (funcNameRegex).exec(constructor.toString());
         var name = (results && results.length > 1) ? results[1] : undefined;
 
-        if (name === undefined) {
+        var excluded = false;
+        arrayForEach(defaults.excludeConstructorNames, function (exclude) {
+            if (exclude === name) {
+                excluded = true;
+                return false;
+            }
+        });
+
+        if (name === undefined || excluded) {
             var flagged = [];
             var nestedFind = function (root) {
                 if (
