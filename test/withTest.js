@@ -60,7 +60,7 @@
 
     test("When 'with' binding null to a element with content", function () {
         elementTest(true, function (element, model) {
-            ok(element[0].__withBound, "It should use the withg binding");
+            ok(element[0].__bindingConvention === ko.bindingConventions.conventionBinders["with"], "It should use the with binding");
         }, true);
     });
 })();

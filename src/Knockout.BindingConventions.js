@@ -67,26 +67,31 @@
         var data = bindingContext[name] ? bindingContext[name] : bindingContext.$data[name];
         var unwrapped = ko.utils.unwrapObservable(data);
         var type = typeof unwrapped;
-        var convention = null;
+        var convention = element.__bindingConvention;
 
-        for (var index in ko.bindingConventions.conventionBinders) {
-            if (typeof ko.bindingConventions.conventionBinders[index].rules !== undefined) {
-                convention = ko.bindingConventions.conventionBinders[index];
-                var should = true;
-                if (convention.rules.length == 1) {
-                    should = convention.rules[0](name, element, bindings, unwrapped, type, data, bindingContext.$data, bindingContext);
-                } else {
-                    arrayForEach(convention.rules, function (rule) {
-                        should = should && rule(name, element, bindings, unwrapped, type, data, bindingContext.$data, bindingContext);
-                    });
-                }
+        if (convention === undefined) {
+            for (var index in ko.bindingConventions.conventionBinders) {
+                if (typeof ko.bindingConventions.conventionBinders[index].rules !== undefined) {
+                    convention = ko.bindingConventions.conventionBinders[index];
+                    var should = true;
+                    if (convention.rules.length == 1) {
+                        should = convention.rules[0](name, element, bindings, unwrapped, type, data, bindingContext.$data, bindingContext);
+                    } else {
+                        arrayForEach(convention.rules, function (rule) {
+                            should = should && rule(name, element, bindings, unwrapped, type, data, bindingContext.$data, bindingContext);
+                        });
+                    }
 
-                if (should) {
-                    convention.apply(name, element, bindings, unwrapped, type, data, bindingContext.$data, bindingContext);
-                    return;
+                    if (should) {
+                        element.__bindingConvention = convention;
+                        break;
+                    }
+                    convention = undefined;
                 }
             }
         }
+        if (convention === undefined) throw "No convention was found for " + name;
+        convention.apply(name, element, bindings, unwrapped, type, data, bindingContext.$data, bindingContext);
     }
 
     ko.bindingConventions.conventionBinders.button = {
@@ -131,37 +136,32 @@
     };
 
     ko.bindingConventions.conventionBinders.text = {
-        rules: [function (name, element, bindings, unwrapped, type) { return element.__textBound || (type !== "object" && type !== "boolean" && element.tagName !== "INPUT" && element.tagName !== "TEXTAREA" && !nodeHasContent(element)); } ],
+        rules: [function (name, element, bindings, unwrapped, type) { return type !== "object" && type !== "boolean" && element.tagName !== "INPUT" && element.tagName !== "TEXTAREA" && !nodeHasContent(element); } ],
         apply: function (name, element, bindings, unwrapped, type, data, viewModel, bindingContext) {
             bindings.text = data;
-            element.__textBound = true;
         }
     };
 
     ko.bindingConventions.conventionBinders["with"] = {
         rules: [function (name, element, bindings, unwrapped, type) {
-            return element.__withBound ||
-            (element.__templateBound === undefined &&
-            (type === "object" || unwrapped === undefined) &&
+            return (type === "object" || unwrapped === undefined) &&
             (unwrapped == null || unwrapped.push === undefined) &&
-            nodeHasContent(element));
+            nodeHasContent(element);
         } ],
         apply: function (name, element, bindings, unwrapped, type, data, viewModel, bindingContext) {
             bindings["with"] = data;
-            element.__withBound = true;
         }
     };
 
     ko.bindingConventions.conventionBinders.foreach = {
-        rules: [function (name, element, bindings, array) { return element.__forEachBound || (array && array.push && element.innerHTML != ""); } ],
+        rules: [function (name, element, bindings, array) { return array && array.push && element.innerHTML != ""; } ],
         apply: function (name, element, bindings, array, type, data, viewModel, bindingContext) {
             bindings.foreach = data;
-            element.__forEachBound = true;
         }
     };
 
     ko.bindingConventions.conventionBinders.template = {
-        rules: [function (name, element, bindings, actualModel, type) { return element.__templateBound || (element.__withBound === undefined && type === "object" && (element.nodeType === 8 || element.innerHTML.trim() === "")); } ],
+        rules: [function (name, element, bindings, actualModel, type) { return type === "object" && (element.nodeType === 8 || element.innerHTML.trim() === ""); } ],
         apply: function (name, element, bindings, actualModel, type, model, viewModel, bindingContext) {
             var className = actualModel ? findConstructorName(actualModel.push ? actualModel[0] : actualModel) : undefined;
             var modelEndsWith = "Model";
@@ -179,7 +179,6 @@
             } else {
                 bindings.template.data = actualModel;
             }
-            element.__templateBound = true;
         }
     };
 
