@@ -131,9 +131,10 @@
     };
 
     ko.bindingConventions.conventionBinders.text = {
-        rules: [function (name, element, bindings, unwrapped, type) { return type !== "object" && type !== "boolean" && element.tagName !== "INPUT" && element.tagName !== "TEXTAREA" && !nodeHasContent(element); } ],
+        rules: [function (name, element, bindings, unwrapped, type) { return element.__textBound || (type !== "object" && type !== "boolean" && element.tagName !== "INPUT" && element.tagName !== "TEXTAREA" && !nodeHasContent(element)); } ],
         apply: function (name, element, bindings, unwrapped, type, data, viewModel, bindingContext) {
             bindings.text = data;
+            element.__textBound = true;
         }
     };
 

@@ -5,7 +5,7 @@
         this.text = ko.observable("Test");
     };
 
-    var textTest = function (tag, isExcludedTag) {
+    var textTest = function (tag, isExcludedTag, assert) {
         var model = new TextViewModel();
         ko.test(tag, "text", model, function (element) {
             if (isExcludedTag === true) {
@@ -13,6 +13,9 @@
             } else {
                 equal(element.html(), model.text(), "It should reflect the text on model");
             }
+            if (assert !== undefined) {
+                assert(element, model);
+            };
         });
     };
 
@@ -26,5 +29,12 @@
 
     test("When binding against a input", function () {
         textTest("input", true);
+    });
+
+    test("When binding a div and then rebind again", function () {
+        textTest("div", false, function(element, model) {
+            model.text("Test2");
+            equal(element.html(), "Test2", "It update text");
+        });
     });
 })();
