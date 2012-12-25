@@ -71,9 +71,13 @@
 
         if (convention === undefined) {
             for (var index in ko.bindingConventions.conventionBinders) {
-                if (typeof ko.bindingConventions.conventionBinders[index].rules !== undefined) {
+                if (ko.bindingConventions.conventionBinders[index].rules !== undefined) {
                     convention = ko.bindingConventions.conventionBinders[index];
                     var should = true;
+                    if (unwrapped == null && convention.defferedApplyIfDataNotSet === true) {
+                        continue;
+                    }
+
                     if (convention.rules.length == 1) {
                         should = convention.rules[0](name, element, bindings, unwrapped, type, data, bindingContext.$data, bindingContext);
                     } else {
@@ -86,12 +90,13 @@
                         element.__bindingConvention = convention;
                         break;
                     }
-                    convention = undefined;
                 }
             }
         }
-        if (convention === undefined) throw "No convention was found for " + name;
-        convention.apply(name, element, bindings, unwrapped, type, data, bindingContext.$data, bindingContext);
+        if (element.__bindingConvention === undefined && unwrapped != null) throw "No convention was found for " + name;
+        if (element.__bindingConvention !== undefined) {
+            element.__bindingConvention.apply(name, element, bindings, unwrapped, type, data, bindingContext.$data, bindingContext);
+        }
     }
 
     ko.bindingConventions.conventionBinders.button = {
@@ -139,7 +144,8 @@
         rules: [function (name, element, bindings, unwrapped, type) { return type !== "object" && type !== "boolean" && element.tagName !== "INPUT" && element.tagName !== "TEXTAREA" && !nodeHasContent(element); } ],
         apply: function (name, element, bindings, unwrapped, type, data, viewModel, bindingContext) {
             bindings.text = data;
-        }
+        },
+        defferedApplyIfDataNotSet: true
     };
 
     ko.bindingConventions.conventionBinders["with"] = {
@@ -179,7 +185,8 @@
             } else {
                 bindings.template.data = actualModel;
             }
-        }
+        },
+        defferedApplyIfDataNotSet: true
     };
 
     var pluralEndings = [{ end: "ies", use: "y" }, "es", "s"];

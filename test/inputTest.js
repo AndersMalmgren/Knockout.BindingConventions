@@ -25,4 +25,13 @@
             equal(model.checked(), true, "it should reflect the change on model");
         });
     });
+
+    test("When binding against a input and setting value on viewmodel", function () {
+        var model = new InputViewModel();
+        ko.test("input", "value", model, function (input) {
+            model.value("test");
+
+            equal(input.val(), "test", "it should reflect the change on the input");
+        });
+    });
 })();

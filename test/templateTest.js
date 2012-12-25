@@ -125,10 +125,19 @@
         });
     });
 
-    test("When binding a template against a null data and then setting model", function () {
-        var model = { nullModel: ko.observable(null) };
+    test("When binding a template against a undefined data and then setting model", function () {
+        var model = { nullModel: ko.observable() };
         templateTest(model, "MyView", "nullModel", function (element) {
             equal("", element.text(), "The view should reflect null value");
+            model.nullModel(new MyApp.MyViewModel());
+            equal("Bound", element.text(), "The view should reflect bound value");
+        });
+    });
+
+        test("When binding a template against a null data and then setting model", function () {
+        var model = { nullModel: ko.observable(null) };
+        templateTest(model, "MyView", "nullModel", function (element) {
+            equal("", element.text(), "The view should reflect undefined value");
             model.nullModel(new MyApp.MyViewModel());
             equal("Bound", element.text(), "The view should reflect bound value");
         });
