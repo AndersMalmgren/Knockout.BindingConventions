@@ -7,6 +7,10 @@
         return this.indexOf(suffix, this.length - suffix.length) !== -1;
     };
 
+    String.prototype.trim = String.prototype.trim || function () {
+        return this.replace(/^\s+|\s+$/g, '');
+    };
+
     var defaults = {
         roots: [window],
         excludeConstructorNames: ["Class"]
@@ -125,7 +129,9 @@
         rules: [function (name, element) { return element.tagName === "INPUT" || element.tagName === "TEXTAREA"; } ],
         apply: function (name, element, bindings, unwrapped, type, data, viewModel, bindingContext) {
             if (type === "boolean") {
-                bindings.attr = { type: "checkbox" };
+                if (ko.utils.ieVersion === undefined) {
+                    bindings.attr = { type: "checkbox" };
+                }
                 bindings.checked = data;
             } else {
                 bindings.value = data;
@@ -179,6 +185,10 @@
                 }
             }
 
+            if (template == null) {
+                throw "VewModel name could not be found";
+            }
+
             bindings.template = { name: template, 'if': model };
             if (actualModel != null && actualModel.push) {
                 bindings.template.foreach = actualModel;
@@ -230,7 +240,7 @@
     };
 
     var nodeHasContent = function (node) {
-        return (node.nodeType === 8 && node.nextSibling.textContent.indexOf("/ko") === -1) ||
+        return (node.nodeType === 8 && node.nextSibling.nodeType === 1) ||
             (node.nodeType === 1 && node.innerHTML !== "");
     }
 
@@ -294,8 +304,12 @@
                    ) {
                     return;
                 }
-
-                root.__fcnChecked = true;
+                try {
+                    root.__fcnChecked = true;
+                }
+                catch (err) {
+                    return; // IE error
+                }
                 if (root.__fcnChecked === undefined) {
                     return;
                 }

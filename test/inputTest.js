@@ -16,15 +16,17 @@
         });
     });
 
-    test("When binding a boolean against a input", function () {
-        var model = new InputViewModel();
-        ko.test("input", "checked", model, function (input, args) {
-            input.attr("checked", true)
-            input.click();
+    if (ko.utils.ieVersion === undefined) {
+        test("When binding a boolean against a input", function () {
+            var model = new InputViewModel();
+            ko.test("input", "checked", model, function (input, args) {
+                input.attr("checked", true)
+                input.click();
 
-            equal(model.checked(), true, "it should reflect the change on model");
+                equal(model.checked(), true, "it should reflect the change on model");
+            });
         });
-    });
+    }
 
     test("When binding against a input and setting value on viewmodel", function () {
         var model = new InputViewModel();
