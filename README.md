@@ -1,3 +1,3 @@
 Convention over configuration plugin for Knockout
 
-[Wiki](https://github.com/AndersMalmgren/Knockout.BindingConventions/wiki)
+[Wiki](http://jsfiddle.net/AWHhr/)
