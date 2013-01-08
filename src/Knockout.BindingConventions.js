@@ -1,5 +1,5 @@
 (function () {
-    if (ko === undefined) {
+    if (window.ko === undefined) {
         throw "This library is dependant on Knockout";
     }
 
