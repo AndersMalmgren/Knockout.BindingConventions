@@ -186,7 +186,7 @@
             }
 
             if (template == null) {
-                throw "VewModel name could not be found";
+                throw "View name could not be found";
             }
 
             bindings.template = { name: template, 'if': model };
