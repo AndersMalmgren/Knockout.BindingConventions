@@ -241,7 +241,7 @@
 
     var nodeHasContent = function (node) {
         return (node.nodeType === 8 && node.nextSibling.nodeType === 1) ||
-            (node.nodeType === 1 && node.innerHTML !== "");
+            (node.nodeType === 1 && node.innerHTML.trim() !== "");
     }
 
     var preCheckConstructorNames = function () {

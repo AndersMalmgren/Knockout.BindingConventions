@@ -98,7 +98,7 @@
       }
     });
 
-    var templateTest = function (model, name, convention, assert) {
+    var templateTest = function (model, name, convention, assert, prepElement) {
         var template = $("<script id='" + name + "' type='text/html'>Bound</script>");
 
         $("body").append(template);
@@ -108,7 +108,7 @@
             template.remove();
         };
 
-        ko.test("div", convention || "$data", model, test);
+        ko.test("div", convention || "$data", model, test, prepElement);
     };
 
     test("When binding a template against a Hoisted function ViewModel", function () {
@@ -134,7 +134,7 @@
         });
     });
 
-        test("When binding a template against a null data and then setting model", function () {
+    test("When binding a template against a null data and then setting model", function () {
         var model = { nullModel: ko.observable(null) };
         templateTest(model, "MyView", "nullModel", function (element) {
             equal("", element.text(), "The view should reflect undefined value");
@@ -166,5 +166,12 @@
         ko.bindingConventions.init({ roots: [MyApp] });
         equal(MyApp.NestedNameSpace.NestedViewModel.__fcnName, "NestedViewModel", "It should add the constuctor name to the object");
         ko.bindingConventions.init({ roots: [window] });        
+    });
+
+    test("When binding a template to a empty element but with newline and whitespace", function() {
+        
+        templateTest(new MyApp.MyViewModel(), "MyView", undefined, undefined, function(element) {
+            element.html("  \r\n");
+        });
     });
 })();
