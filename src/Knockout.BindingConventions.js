@@ -175,18 +175,20 @@
     ko.bindingConventions.conventionBinders.template = {
         rules: [function (name, element, bindings, actualModel, type) { return type === "object" && (element.nodeType === 8 || element.innerHTML.trim() === ""); } ],
         apply: function (name, element, bindings, actualModel, type, model, viewModel, bindingContext) {
-            var className = actualModel ? findConstructorName(actualModel.push ? actualModel[0] : actualModel) : undefined;
-            var modelEndsWith = "Model";
-            var template = null;
-            if (className !== undefined && className.endsWith(modelEndsWith)) {
-                var template = className.substring(0, className.length - modelEndsWith.length);
-                if (!template.endsWith("View")) {
-                    template = template + "View";
+            if (actualModel != null) {
+                var className = actualModel ? findConstructorName(actualModel.push ? actualModel[0] : actualModel) : undefined;
+                var modelEndsWith = "Model";
+                var template = null;
+                if (className !== undefined && className.endsWith(modelEndsWith)) {
+                    var template = className.substring(0, className.length - modelEndsWith.length);
+                    if (!template.endsWith("View")) {
+                        template = template + "View";
+                    }
                 }
-            }
 
-            if (template == null) {
-                throw "View name could not be found";
+                if (template == null) {
+                    throw "View name could not be found";
+                }
             }
 
             bindings.template = { name: template, 'if': model };

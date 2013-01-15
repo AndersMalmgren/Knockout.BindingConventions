@@ -130,7 +130,16 @@
         templateTest(model, "MyView", "nullModel", function (element) {
             equal("", element.text(), "The view should reflect null value");
             model.nullModel(new MyApp.MyViewModel());
+            equal(element.text(), "Bound", "The view should reflect bound value");
+        });
+    });
+
+    test("When binding a template against null data when a ViewModel is allready bound", function () {
+        var model = { model: ko.observable(new MyApp.MyViewModel()) };
+        templateTest(model, "MyView", "model", function (element) {
             equal("Bound", element.text(), "The view should reflect bound value");
+            model.model(null);
+            equal(element.text(), "", "The view should reflect null value");
         });
     });
 
@@ -139,7 +148,7 @@
         templateTest(model, "MyView", "nullModel", function (element) {
             equal("", element.text(), "The view should reflect undefined value");
             model.nullModel(new MyApp.MyViewModel());
-            equal("Bound", element.text(), "The view should reflect bound value");
+            equal(element.text(), "Bound", "The view should reflect bound value");
         });
     });
 
