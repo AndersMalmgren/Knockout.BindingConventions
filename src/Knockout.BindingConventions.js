@@ -1,3 +1,6 @@
+// Knockout.BindingConventions
+// (c) Anders Malmgren - https://github.com/AndersMalmgren/Knockout.BindingConventions
+// License: MIT (http://www.opensource.org/licenses/mit-license.php)
 (function () {
     if (window.ko === undefined) {
         throw "This library is dependant on Knockout";
