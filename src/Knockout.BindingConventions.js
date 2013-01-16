@@ -22,7 +22,6 @@
     ko.bindingConventions = {
         init: function (options) {
             ko.utils.extend(defaults, options);
-            preCheckConstructorNames();
         },
         conventionBinders: {}
     };
@@ -347,5 +346,11 @@
         }
         constructor.__fcnName = name;
         return name;
+    };
+
+    var orgApplyBindings = ko.applyBindings;
+    ko.applyBindings = function (viewModel, element) {
+        preCheckConstructorNames();
+        orgApplyBindings(viewModel, element);
     };
 })();
