@@ -110,7 +110,7 @@
         apply: function (name, element, bindings, unwrapped, type, data, viewModel, bindingContext) {
             bindings.click = unwrapped;
 
-            var guard = viewModel["can" + name.substring(0, 1).toUpperCase() + name.substring(1)];
+            var guard = viewModel["can" + getPascalCased(name)];
             if (guard !== undefined)
                 bindings.enable = guard;
         }
@@ -122,8 +122,8 @@
             bindings.options = options;
 
             var itemName = singularize(name);
-            bindings.value = viewModel["selected" + itemName.substring(0, 1).toUpperCase() + itemName.substring(1)];
-            bindings.selectedOptions = viewModel["selected" + name.substring(0, 1).toUpperCase() + name.substring(1)];
+            bindings.value = viewModel["selected" + getPascalCased(itemName)];
+            bindings.selectedOptions = viewModel["selected" + getPascalCased(name)];
         }
     };
 
@@ -201,6 +201,10 @@
             }
         },
         defferedApplyIfDataNotSet: true
+    };
+
+    var getPascalCased = function(text) {
+        return text.substring(0, 1).toUpperCase() + text.substring(1);
     };
 
     var pluralEndings = [{ end: "ies", use: "y" }, "es", "s"];
