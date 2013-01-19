@@ -87,7 +87,7 @@
       }
     });
 
-    MyApp.OOExtendedTwoViewModel = MyApp.OOExtendedViewModel.extend({
+    MyApp.OOExtendedSubViewModel = MyApp.OOExtendedViewModel.extend({
       init: function(){
       }
     });
@@ -170,6 +170,12 @@
         templateTest(new MyApp.OOExtendedViewModel(), "OOExtendedView");
         ko.bindingConventions.init({ roots: [window] });
     });
+
+    test("When binding a template against a OO extended ViewModel", function () {
+        ko.bindingConventions.init({ roots: [MyApp] });
+        templateTest(new MyApp.OOExtendedSubViewModel(), "OOExtendedSubView");
+        ko.bindingConventions.init({ roots: [window] });
+    });    
 
     test("When prechecking constructor names with a nested namespace",function() {
         ko.bindingConventions.init({ roots: [MyApp] });
