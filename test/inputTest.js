@@ -36,4 +36,22 @@
             equal(input.val(), "test", "it should reflect the change on the input");
         });
     });
+
+    test("When binding against a input and guard denies", function () {
+        var model = new InputViewModel();
+        model.canChangeValue = ko.observable(false);
+
+        ko.test("input", "value", model, function (input) {
+            equal($(input).is(":disabled"), true, "Textbox should be disabled");
+        });
+    });
+
+    test("When binding against a input and guard accept changes", function () {
+        var model = new InputViewModel();
+        model.canChangeValue = ko.observable(true);
+
+        ko.test("input", "value", model, function (input) {
+            equal($(input).is(":disabled"), false, "Textbox should be enabled");
+        });
+    });
 })();

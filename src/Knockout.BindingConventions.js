@@ -138,6 +138,10 @@
             } else {
                 bindings.value = data;
             }
+
+            var guard = viewModel["canChange" + getPascalCased(name)];
+            if (guard !== undefined)
+                bindings.enable = guard;
         }
     };
 
