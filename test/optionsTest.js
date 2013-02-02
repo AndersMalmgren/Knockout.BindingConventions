@@ -16,6 +16,12 @@
         this.selectedCompany = ko.observable();
     };
 
+    GuardOptionsViewModel = function () {
+        this.options = ko.observableArray(["1", "2", "3"]);
+        this.selectedOption = ko.observable();
+        this.canChangeSelectedOption = ko.observable(false);
+    };
+
     var optionsTest = function (assert, model, multi, convention) {
         var model = model ? new model : new OptionsViewModel();
         convention = convention || "options"
@@ -55,5 +61,24 @@
             select.change();
             equal(model.selectedCompany(), "3", "It should be reflected on model");
         }, CompanyViewModel, false, 'companies');
+    });
+
+    test("When guard denies input", function () {
+        optionsTest(function (select, model) {
+            equal(select.is(":disabled"), true, "It should deny input");
+        }, GuardOptionsViewModel);
+    });
+
+    test("When guard accpects input", function () {
+        optionsTest(function (select, model) {
+            model.canChangeSelectedOption(true);
+            equal(select.is(":disabled"), false, "It should accept input");
+        }, GuardOptionsViewModel);
+    });
+
+    test("When guard is input", function () {
+        optionsTest(function (select, model) {
+            equal(select.is(":disabled"), false, "It should accept selection");
+        });
     });
 })();

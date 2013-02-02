@@ -122,8 +122,14 @@
             bindings.options = options;
 
             var itemName = singularize(name);
-            bindings.value = viewModel["selected" + getPascalCased(itemName)];
+            var pascalCasedItemName = getPascalCased(itemName);
+
+            bindings.value = viewModel["selected" + pascalCasedItemName];
             bindings.selectedOptions = viewModel["selected" + getPascalCased(name)];
+            var guard = viewModel["canChangeSelected" + pascalCasedItemName];
+            if (guard !== undefined) {
+                bindings.enable = guard;
+            }
         }
     };
 
@@ -207,7 +213,7 @@
         defferedApplyIfDataNotSet: true
     };
 
-    var getPascalCased = function(text) {
+    var getPascalCased = function (text) {
         return text.substring(0, 1).toUpperCase() + text.substring(1);
     };
 
