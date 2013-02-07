@@ -185,7 +185,7 @@
     };
 
     ko.bindingConventions.conventionBinders.template = {
-        rules: [function (name, element, bindings, actualModel, type) { return type === "object" && (element.nodeType === 8 || element.innerHTML.trim() === ""); } ],
+        rules: [function (name, element, bindings, actualModel, type) { return type === "object" && !nodeHasContent(element); } ],
         apply: function (name, element, bindings, actualModel, type, model, viewModel, bindingContext) {
             if (actualModel != null) {
                 var className = actualModel ? findConstructorName(actualModel.push ? actualModel[0] : actualModel) : undefined;
@@ -232,25 +232,6 @@
         return name;
     };
 
-    var findMemberName = function (member, value, viewModel, bindingContext) {
-        if (member !== undefined) {
-            return { model: viewModel, name: member };
-        }
-
-        var result = {};
-        arrayForEach([viewModel, bindingContext.$parent], function (model) {
-            for (var index in model) {
-                if (model[index] === value) {
-                    result.name = index;
-                    result.model = model;
-                    return false;
-                }
-            }
-        });
-
-        return result;
-    }
-
     var arrayForEach = function (array, action) {
         for (var i = 0; i < array.length; i++) {
             if (action(array[i]) === false) break;
@@ -288,7 +269,7 @@
         });
     };
 
-    var findConstructorName = function (instance) {
+    var findConstructorName  = function (instance) {
         var constructor = instance.constructor;
 
         if (constructor.__fcnName !== undefined) {
@@ -367,4 +348,10 @@
         preCheckConstructorNames();
         orgApplyBindings(viewModel, element);
     };
+
+    ko.bindingConventions.utils = {
+        findConstructorName: findConstructorName,
+        singularize: singularize,
+        getPascalCased: getPascalCased
+    }
 })();
