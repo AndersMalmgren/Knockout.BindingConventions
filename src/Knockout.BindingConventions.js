@@ -187,8 +187,11 @@
     ko.bindingConventions.conventionBinders.template = {
         rules: [function (name, element, bindings, actualModel, type) { return type === "object" && !nodeHasContent(element); } ],
         apply: function (name, element, bindings, actualModel, type, model, viewModel, bindingContext) {
-            if (actualModel != null) {
-                var className = actualModel ? findConstructorName(actualModel.push ? actualModel[0] : actualModel) : undefined;
+            var isArray = actualModel != null && actualModel.push !== undefined;
+            var isDeffered = actualModel == null || (isArray && actualModel.length == 0);
+
+            if (!isDeffered) {
+                var className = actualModel ? findConstructorName(isArray ? actualModel[0] : actualModel) : undefined;
                 var modelEndsWith = "Model";
                 var template = null;
                 if (className !== undefined && className.endsWith(modelEndsWith)) {
