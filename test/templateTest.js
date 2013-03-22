@@ -164,6 +164,14 @@
             equal(element.text(), "BoundBound", "It should bind all items");
         });
     });
+    
+    test("When binding a template against an empty array of models", function () {
+        var model = { items: ko.observableArray() };
+        templateTest(model, "MyView", "items", function (element) {
+            model.items.push(new MyApp.MyViewModel());
+            equal(element.text(), "Bound", "It should bind all items");
+        });
+    });
 
     test("When binding a template against a OO extended ViewModel", function () {
         ko.bindingConventions.init({ roots: [MyApp] });
