@@ -1,6 +1,26 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Src", "Src", "{F5F0F8FD-0297-40B3-B10E-56D432EC2208}"
+	ProjectSection(SolutionItems) = preProject
+		src\Knockout.BindingConventions.js = src\Knockout.BindingConventions.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{C767A0B3-77F9-47AF-96C6-388706EB4B71}"
+	ProjectSection(SolutionItems) = preProject
+		test\buttonTest.js = test\buttonTest.js
+		test\foreachTest.js = test\foreachTest.js
+		test\inputTest.js = test\inputTest.js
+		test\nameAttributeTest.js = test\nameAttributeTest.js
+		test\optionsTest.js = test\optionsTest.js
+		test\runner.html = test\runner.html
+		test\templateTest.js = test\templateTest.js
+		test\test.js = test\test.js
+		test\textTest.js = test\textTest.js
+		test\visibleTest.js = test\visibleTest.js
+		test\withTest.js = test\withTest.js
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
