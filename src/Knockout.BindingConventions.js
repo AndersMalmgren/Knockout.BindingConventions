@@ -80,7 +80,7 @@
                 if (ko.bindingConventions.conventionBinders[index].rules !== undefined) {
                     convention = ko.bindingConventions.conventionBinders[index];
                     var should = true;
-                    if (unwrapped == null && convention.defferedApplyIfDataNotSet === true) {
+                    if (unwrapped == null && convention.deferredApplyIfDataNotSet === true) {
                         continue;
                     }
 
@@ -163,7 +163,7 @@
         apply: function (name, element, bindings, unwrapped, type, data, viewModel, bindingContext) {
             bindings.text = data;
         },
-        defferedApplyIfDataNotSet: true
+        deferredApplyIfDataNotSet: true
     };
 
     ko.bindingConventions.conventionBinders["with"] = {
@@ -188,9 +188,9 @@
         rules: [function (name, element, bindings, actualModel, type) { return type === "object" && !nodeHasContent(element); } ],
         apply: function (name, element, bindings, actualModel, type, model, viewModel, bindingContext) {
             var isArray = actualModel != null && actualModel.push !== undefined;
-            var isDeffered = actualModel == null || (isArray && actualModel.length == 0);
+            var isDeferred = actualModel == null || (isArray && actualModel.length == 0);
 
-            if (!isDeffered) {
+            if (!isDeferred) {
                 var className = actualModel ? findConstructorName(isArray ? actualModel[0] : actualModel) : undefined;
                 var modelEndsWith = "Model";
                 var template = null;
@@ -213,7 +213,7 @@
                 bindings.template.data = actualModel;
             }
         },
-        defferedApplyIfDataNotSet: true
+        deferredApplyIfDataNotSet: true
     };
 
     var getPascalCased = function (text) {
