@@ -272,8 +272,8 @@
         });
     };
 
-    var findConstructorName  = function (instance) {
-        var constructor = instance.constructor;
+    var findConstructorName  = function (obj, isConstructor) {
+        var constructor = isConstructor ? obj : obj.constructor;
 
         if (constructor.__fcnName !== undefined) {
             return constructor.__fcnName;
