@@ -69,8 +69,20 @@
     };
     ko.bindingProvider.instance = new ko.conventionBindingProvider();
 
-    var setBindingsByConvention = function (name, element, bindingContext, bindings) {
+    var getDataFromOOQuery = function (name, context) {
+        var parts = name.split(".");
+        for (var i = 0; i < parts.length; i++) {
+            var context = context[parts[i]];
+        }
+
+        return context;
+    };
+
+    var setBindingsByConvention = function(name, element, bindingContext, bindings) {
         var data = bindingContext[name] ? bindingContext[name] : bindingContext.$data[name];
+        if (data == null) {
+            data = getDataFromOOQuery(name, bindingContext.$data);
+        }
         var unwrapped = ko.utils.unwrapObservable(data);
         var type = typeof unwrapped;
         var convention = element.__bindingConvention;
@@ -87,7 +99,7 @@
                     if (convention.rules.length == 1) {
                         should = convention.rules[0](name, element, bindings, unwrapped, type, data, bindingContext.$data, bindingContext);
                     } else {
-                        arrayForEach(convention.rules, function (rule) {
+                        arrayForEach(convention.rules, function(rule) {
                             should = should && rule(name, element, bindings, unwrapped, type, data, bindingContext.$data, bindingContext);
                         });
                     }
@@ -103,7 +115,7 @@
         if (element.__bindingConvention !== undefined) {
             element.__bindingConvention.apply(name, element, bindings, unwrapped, type, data, bindingContext.$data, bindingContext);
         }
-    }
+    };
 
     ko.bindingConventions.conventionBinders.button = {
         rules: [function (name, element, bindings, unwrapped, type) { return element.tagName === "BUTTON" && type === "function"; } ],
@@ -195,7 +207,7 @@
                 var modelEndsWith = "Model";
                 var template = null;
                 if (className !== undefined && className.endsWith(modelEndsWith)) {
-                    var template = className.substring(0, className.length - modelEndsWith.length);
+                    template = className.substring(0, className.length - modelEndsWith.length);
                     if (!template.endsWith("View")) {
                         template = template + "View";
                     }
@@ -244,7 +256,7 @@
     var nodeHasContent = function (node) {
         return (node.nodeType === 8 && node.nextSibling.nodeType === 1) ||
             (node.nodeType === 1 && node.innerHTML.trim() !== "");
-    }
+    };
 
     var preCheckConstructorNames = function () {
         var flagged = [];
@@ -261,7 +273,7 @@
                 }
                 nestedPreCheck(item);
             }
-        }
+        };
 
         arrayForEach(defaults.roots, function (root) {
             nestedPreCheck(root);
@@ -272,7 +284,7 @@
         });
     };
 
-    var findConstructorName  = function (obj, isConstructor) {
+    var findConstructorName = function (obj, isConstructor) {
         var constructor = isConstructor ? obj : obj.constructor;
 
         if (constructor.__fcnName !== undefined) {
@@ -294,8 +306,7 @@
         if (name === undefined || excluded) {
             var flagged = [];
             var nestedFind = function (root) {
-                if (
-                    root === null ||
+                if (root === null ||
                     root === window.document ||
                     root === window.html ||
                     root === window.history || // fixes security exception
@@ -303,13 +314,12 @@
                     typeof root === "function" ||
                     root.__fcnChecked === true || // fixes circular references
                     (root.location && root.location != window.location) // fixes (i)frames
-                   ) {
+                ) {
                     return;
                 }
                 try {
                     root.__fcnChecked = true;
-                }
-                catch (err) {
+                } catch (err) {
                     return; // IE error
                 }
                 if (root.__fcnChecked === undefined) {
@@ -329,7 +339,7 @@
                         return found;
                     }
                 }
-            }
+            };
 
             arrayForEach(defaults.roots, function (root) {
                 name = nestedFind(root);
@@ -356,5 +366,5 @@
         findConstructorName: findConstructorName,
         singularize: singularize,
         getPascalCased: getPascalCased
-    }
+    };
 })();
