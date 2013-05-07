@@ -19,8 +19,10 @@
         excludeConstructorNames: ["Class"]
     };
 
+    var prechecked = false;
     ko.bindingConventions = {
         init: function (options) {
+            prechecked = false;
             ko.utils.extend(defaults, options);
         },
         conventionBinders: {}
@@ -78,7 +80,7 @@
         return context;
     };
 
-    var setBindingsByConvention = function(name, element, bindingContext, bindings) {
+    var setBindingsByConvention = function (name, element, bindingContext, bindings) {
         var data = bindingContext[name] ? bindingContext[name] : bindingContext.$data[name];
         if (data == null) {
             data = getDataFromOOQuery(name, bindingContext.$data);
@@ -99,7 +101,7 @@
                     if (convention.rules.length == 1) {
                         should = convention.rules[0](name, element, bindings, unwrapped, type, data, bindingContext.$data, bindingContext);
                     } else {
-                        arrayForEach(convention.rules, function(rule) {
+                        arrayForEach(convention.rules, function (rule) {
                             should = should && rule(name, element, bindings, unwrapped, type, data, bindingContext.$data, bindingContext);
                         });
                     }
@@ -358,7 +360,11 @@
 
     var orgApplyBindings = ko.applyBindings;
     ko.applyBindings = function (viewModel, element) {
-        preCheckConstructorNames();
+        if (prechecked === false) {
+            preCheckConstructorNames();
+            prechecked = true;
+        }
+
         orgApplyBindings(viewModel, element);
     };
 

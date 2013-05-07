@@ -185,10 +185,14 @@
         ko.bindingConventions.init({ roots: [window] });
     });    
 
+    
+
     test("When prechecking constructor names with a nested namespace",function() {
         ko.bindingConventions.init({ roots: [MyApp] });
-        equal(MyApp.NestedNameSpace.NestedViewModel.__fcnName, "NestedViewModel", "It should add the constuctor name to the object");
-        ko.bindingConventions.init({ roots: [window] });        
+        ko.testBase({}, $("<div></div>"), function() {
+            equal(MyApp.NestedNameSpace.NestedViewModel.__fcnName, "NestedViewModel", "It should add the constuctor name to the object");
+            ko.bindingConventions.init({ roots: [window] });
+        });
     });
 
     test("When binding a template to a empty element but with newline and whitespace", function() {
