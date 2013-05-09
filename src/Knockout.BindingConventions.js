@@ -282,7 +282,7 @@
         });
 
         arrayForEach(flagged, function (flag) {
-            flag.__fcnChecked = undefined;
+            delete flag.__fcnChecked;
         });
     };
 
@@ -351,7 +351,7 @@
             });
 
             for (var index in flagged) {
-                flagged[index].__fcnChecked = false;
+                delete flagged[index].__fcnChecked;
             }
         }
         constructor.__fcnName = name;
