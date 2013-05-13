@@ -22,6 +22,17 @@
         this.canChangeSelectedOption = ko.observable(false);
     };
 
+    GuardOptionsNameIssueViewModel = function () {
+        this.pages = ko.observableArray(["A", "B", "C"]);
+        this.selectedPage = ko.observable();
+    };
+
+    GuardMultiOptionsViewModel = function () {
+        this.options = ko.observableArray(["1", "2", "3"]);
+        this.selectedOptions = ko.observable();
+        this.canChangeSelectedOptions = ko.observable(false);
+    };
+
     var optionsTest = function (assert, model, multi, convention) {
         var model = model ? new model : new OptionsViewModel();
         convention = convention || "options"
@@ -48,7 +59,7 @@
 
     test("When selecting multiple options", function () {
         optionsTest(function (select, model) {
-            var selected = ["3", "2"]
+            var selected = ["3", "2"];
             select.val(selected);
             select.change();
             equal(model.selectedOptions().length, selected.length, "It should be reflected on model");
@@ -61,6 +72,14 @@
             select.change();
             equal(model.selectedCompany(), "3", "It should be reflected on model");
         }, CompanyViewModel, false, 'companies');
+    });
+
+    test("When items are named pages (s not es)", function () {
+        optionsTest(function (select, model) {
+            select.val("C");
+            select.change();
+            equal(model.selectedPage(), "C", "It should be reflected on model");
+        }, GuardOptionsNameIssueViewModel, false, "pages");
     });
 
     test("When guard denies input", function () {
@@ -76,9 +95,15 @@
         }, GuardOptionsViewModel);
     });
 
-    test("When guard is input", function () {
+    test("When guard is undefined", function () {
         optionsTest(function (select, model) {
             equal(select.is(":disabled"), false, "It should accept selection");
         });
+    });
+
+    test("When guard protects multiple selection", function () {
+        optionsTest(function (select) {
+            equal(select.is(":disabled"), true, "It should deny selection");
+        }, GuardMultiOptionsViewModel, true);
     });
 })();

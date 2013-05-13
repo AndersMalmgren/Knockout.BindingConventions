@@ -134,13 +134,28 @@
         rules: [function (name, element, bindings, options) { return element.tagName === "SELECT" && options.push; } ],
         apply: function (name, element, bindings, options, type, data, viewModel, bindingContext) {
             bindings.options = options;
+            var selectedMemberFound = false;
 
-            var itemName = singularize(name);
-            var pascalCasedItemName = getPascalCased(itemName);
+            singularize(name, function (singularized) {
+                var pascalCasedItemName = getPascalCased(singularized);
+                var selected = viewModel["selected" + pascalCasedItemName];
 
-            bindings.value = viewModel["selected" + pascalCasedItemName];
-            bindings.selectedOptions = viewModel["selected" + getPascalCased(name)];
-            var guard = viewModel["canChangeSelected" + pascalCasedItemName];
+                if (selected === undefined) return false;
+
+                bindings.value = selected;
+                var guard = viewModel["canChangeSelected" + pascalCasedItemName];
+                if (guard !== undefined) {
+                    bindings.enable = guard;
+                }
+                selectedMemberFound = true;
+                return true;
+            });
+
+            if (selectedMemberFound) return;
+
+            var pascalCased = getPascalCased(name);
+            bindings.selectedOptions = viewModel["selected" + pascalCased];
+            var guard = viewModel["canChangeSelected" + pascalCased];
             if (guard !== undefined) {
                 bindings.enable = guard;
             }
@@ -235,23 +250,30 @@
     };
 
     var pluralEndings = [{ end: "ies", use: "y" }, "es", "s"];
-    var singularize = function (name) {
+    var singularize = function (name, callback) {
+        var singularized = null;
         arrayForEach(pluralEndings, function (ending) {
             append = ending.use;
             ending = ending.end || ending;
             if (name.endsWith(ending)) {
-                name = name.substring(0, name.length - ending.length);
-                name = name + (append || "");
-                return false;
+                singularized = name.substring(0, name.length - ending.length);
+                singularized = singularized + (append || "");
+                if (callback) {
+                    return !callback(singularized);
+                }
+
+                return true;
             }
+            return true;
         });
 
-        return name;
+        return singularized;
     };
 
     var arrayForEach = function (array, action) {
         for (var i = 0; i < array.length; i++) {
-            if (action(array[i]) === false) break;
+            var result = action(array[i]);
+            if (result === false) break;
         }
     };
 
