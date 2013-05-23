@@ -207,7 +207,7 @@
     };
 
     ko.bindingConventions.conventionBinders.foreach = {
-        rules: [function (name, element, bindings, array) { return array && array.push && element.innerHTML != ""; } ],
+        rules: [function (name, element, bindings, array) { return array && array.push && nodeHasContent(element); } ],
         apply: function (name, element, bindings, array, type, data, viewModel, bindingContext) {
             bindings.foreach = data;
         }

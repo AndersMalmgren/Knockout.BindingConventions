@@ -5,7 +5,7 @@
     var foreachTest = function (items, test) {
         prep = function (element) {
             element.html("<div>Row</div>");
-        }
+        };
 
         ko.test("div", "$data", items, test, prep);
     };
@@ -23,5 +23,26 @@
             model.push("1");
             equal(element.find("div").length, 1, "It should add a row");
         });
+    });
+
+    test("When binding a foreach against a observable array and an empty virtual element", function () {
+        var model = ko.observableArray();
+        var orgForeachApply = ko.bindingConventions.conventionBinders.foreach.apply;
+        var orgTemplateApply = ko.bindingConventions.conventionBinders.template.apply;
+
+        ko.bindingConventions.conventionBinders.foreach.apply = function () {
+            ok(false, "It should not use foreach convention");
+        };
+
+        ko.bindingConventions.conventionBinders.template.apply = function () {
+            ok(true, "It should use template convention");
+        }
+
+        ko.virtualElementTest("$data", undefined, model, function () {
+
+        });
+
+        ko.bindingConventions.conventionBinders.foreach.apply = orgForeachApply;
+        ko.bindingConventions.conventionBinders.template.apply = orgTemplateApply;
     });
 })();
