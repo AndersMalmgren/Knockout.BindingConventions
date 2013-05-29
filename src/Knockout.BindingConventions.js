@@ -1,7 +1,7 @@
 // Knockout.BindingConventions
 // (c) Anders Malmgren - https://github.com/AndersMalmgren/Knockout.BindingConventions
 // License: MIT (http://www.opensource.org/licenses/mit-license.php)
-(function () {
+(function (window, ko) {
     if (window.ko === undefined) {
         throw "This library is dependant on Knockout";
     }
@@ -285,7 +285,7 @@
     var preCheckConstructorNames = function () {
         var flagged = [];
         var nestedPreCheck = function (root) {
-            if (root.__fcnChecked || root === window) return;
+            if (root === undefined || root.__fcnChecked || root === window) return;
 
             root.__fcnChecked = true;
             if (root.__fcnChecked === undefined) return;
@@ -395,4 +395,4 @@
         singularize: singularize,
         getPascalCased: getPascalCased
     };
-})();
+})(window, ko);
