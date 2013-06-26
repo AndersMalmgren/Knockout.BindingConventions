@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Knockout.BindingConventions</id>
+    <version>1.0</version>
+    <authors>Anders Malmgren</authors>
+    <owners>Anders Malmgren</owners>
+    <licenseUrl>http://opensource.org/licenses/MIT</licenseUrl>
+    <projectUrl>https://github.com/AndersMalmgren/Knockout.BindingConventions</projectUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <description>Caliburn Micro style conventions for Knockout</description>
+    <releaseNotes></releaseNotes>
+    <copyright>Copyright 2013</copyright>
+    <tags>Knockout MVVM Binding Convention</tags>
+    <dependencies>
+      <dependency id="knockoutjs" version="2.2.1" />
+    </dependencies>
+  </metadata>
+</package>
