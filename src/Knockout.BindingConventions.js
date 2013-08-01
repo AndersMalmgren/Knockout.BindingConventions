@@ -30,7 +30,7 @@
 
     ko.bindingConventions.ConventionBindingProvider = function () {
 
-        this.orgBindingProvider = new ko.bindingProvider();
+        this.orgBindingProvider = ko.bindingProvider.instance || new ko.bindingProvider();
         this.orgNodeHasBindings = this.orgBindingProvider.nodeHasBindings;
         this.attribute = "data-name";
         this.virtualAttribute = "ko name:";
