@@ -28,15 +28,15 @@
         conventionBinders: {}
     };
 
-    ko.conventionBindingProvider = function () {
+    ko.bindingConventions.ConventionBindingProvider = function () {
 
-        this.orgBindingProvider = new ko.bindingProvider();
+        this.orgBindingProvider = ko.bindingProvider.instance || new ko.bindingProvider();
         this.orgNodeHasBindings = this.orgBindingProvider.nodeHasBindings;
         this.attribute = "data-name";
         this.virtualAttribute = "ko name:";
     };
 
-    ko.conventionBindingProvider.prototype = {
+    ko.bindingConventions.ConventionBindingProvider.prototype = {
         getMemberName: function (node) {
             var name = null;
 
@@ -44,8 +44,8 @@
                 name = node.getAttribute(this.attribute);
             }
             else if (node.nodeType === 8) {
-                value = "" + node.nodeValue || node.text;
-                index = value.indexOf(this.virtualAttribute);
+                var value = "" + node.nodeValue || node.text;
+                var index = value.indexOf(this.virtualAttribute);
 
                 if (index > -1) {
                     name = value.substring(index + this.virtualAttribute.length).trim();
@@ -69,12 +69,12 @@
             return result;
         }
     };
-    ko.bindingProvider.instance = new ko.conventionBindingProvider();
+    ko.bindingProvider.instance = new ko.bindingConventions.ConventionBindingProvider();
 
-    var getDataFromOOQuery = function (name, context) {
+    var getDataFromComplexObjectQuery = function (name, context) {
         var parts = name.split(".");
         for (var i = 0; i < parts.length; i++) {
-            var context = context[parts[i]];
+            context = context[parts[i]];
         }
 
         return context;
@@ -83,7 +83,7 @@
     var setBindingsByConvention = function (name, element, bindingContext, bindings) {
         var data = bindingContext[name] ? bindingContext[name] : bindingContext.$data[name];
         if (data == null) {
-            data = getDataFromOOQuery(name, bindingContext.$data);
+            data = getDataFromComplexObjectQuery(name, bindingContext.$data);
         }
         var unwrapped = ko.utils.unwrapObservable(data);
         var type = typeof unwrapped;
@@ -121,7 +121,7 @@
 
     ko.bindingConventions.conventionBinders.button = {
         rules: [function (name, element, bindings, unwrapped, type) { return element.tagName === "BUTTON" && type === "function"; } ],
-        apply: function (name, element, bindings, unwrapped, type, data, viewModel, bindingContext) {
+        apply: function (name, element, bindings, unwrapped, type, data, viewModel) {
             bindings.click = unwrapped;
 
             var guard = viewModel["can" + getPascalCased(name)];
@@ -132,9 +132,10 @@
 
     ko.bindingConventions.conventionBinders.options = {
         rules: [function (name, element, bindings, options) { return element.tagName === "SELECT" && options.push; } ],
-        apply: function (name, element, bindings, options, type, data, viewModel, bindingContext) {
+        apply: function (name, element, bindings, options, type, data, viewModel) {
             bindings.options = options;
             var selectedMemberFound = false;
+            var guard;
 
             singularize(name, function (singularized) {
                 var pascalCasedItemName = getPascalCased(singularized);
@@ -143,7 +144,7 @@
                 if (selected === undefined) return false;
 
                 bindings.value = selected;
-                var guard = viewModel["canChangeSelected" + pascalCasedItemName];
+                guard = viewModel["canChangeSelected" + pascalCasedItemName];
                 if (guard !== undefined) {
                     bindings.enable = guard;
                 }
@@ -155,7 +156,7 @@
 
             var pascalCased = getPascalCased(name);
             bindings.selectedOptions = viewModel["selected" + pascalCased];
-            var guard = viewModel["canChangeSelected" + pascalCased];
+            guard = viewModel["canChangeSelected" + pascalCased];
             if (guard !== undefined) {
                 bindings.enable = guard;
             }
@@ -164,7 +165,7 @@
 
     ko.bindingConventions.conventionBinders.input = {
         rules: [function (name, element) { return element.tagName === "INPUT" || element.tagName === "TEXTAREA"; } ],
-        apply: function (name, element, bindings, unwrapped, type, data, viewModel, bindingContext) {
+        apply: function (name, element, bindings, unwrapped, type, data, viewModel) {
             if (type === "boolean") {
                 if (ko.utils.ieVersion === undefined) {
                     bindings.attr = { type: "checkbox" };
@@ -182,14 +183,14 @@
 
     ko.bindingConventions.conventionBinders.visible = {
         rules: [function (name, element, bindings, unwrapped, type) { return type === "boolean" && element.tagName !== "INPUT"; } ],
-        apply: function (name, element, bindings, unwrapped, type, data, viewModel, bindingContext) {
+        apply: function (name, element, bindings, unwrapped, type, data) {
             bindings.visible = data;
         }
     };
 
     ko.bindingConventions.conventionBinders.text = {
         rules: [function (name, element, bindings, unwrapped, type) { return type !== "object" && type !== "boolean" && element.tagName !== "INPUT" && element.tagName !== "TEXTAREA" && !nodeHasContent(element); } ],
-        apply: function (name, element, bindings, unwrapped, type, data, viewModel, bindingContext) {
+        apply: function (name, element, bindings, unwrapped, type, data) {
             bindings.text = data;
         },
         deferredApplyIfDataNotSet: true
@@ -201,29 +202,29 @@
             (unwrapped == null || unwrapped.push === undefined) &&
             nodeHasContent(element);
         } ],
-        apply: function (name, element, bindings, unwrapped, type, data, viewModel, bindingContext) {
+        apply: function (name, element, bindings, unwrapped, type, data) {
             bindings["with"] = data;
         }
     };
 
     ko.bindingConventions.conventionBinders.foreach = {
         rules: [function (name, element, bindings, array) { return array && array.push && nodeHasContent(element); } ],
-        apply: function (name, element, bindings, array, type, data, viewModel, bindingContext) {
+        apply: function (name, element, bindings, array, type, data) {
             bindings.foreach = data;
         }
     };
 
     ko.bindingConventions.conventionBinders.template = {
         rules: [function (name, element, bindings, actualModel, type) { return type === "object" && !nodeHasContent(element); } ],
-        apply: function (name, element, bindings, actualModel, type, model, viewModel, bindingContext) {
+        apply: function (name, element, bindings, actualModel, type, model) {
             var isArray = actualModel != null && actualModel.push !== undefined;
             var isDeferred = actualModel == null || (isArray && actualModel.length == 0);
 
+            var template = null;
             if (!isDeferred) {
                 var className = actualModel ? findConstructorName(isArray ? actualModel[0] : actualModel) : undefined;
                 var modelEndsWith = "Model";
-                var template = null;
-                if (className !== undefined && className.endsWith(modelEndsWith)) {
+                if (className != null && className.endsWith(modelEndsWith)) {
                     template = className.substring(0, className.length - modelEndsWith.length);
                     if (!template.endsWith("View")) {
                         template = template + "View";
@@ -236,7 +237,7 @@
             }
 
             bindings.template = { name: template, 'if': model };
-            if (actualModel != null && actualModel.push) {
+            if (isArray) {
                 bindings.template.foreach = actualModel;
             } else {
                 bindings.template.data = actualModel;
@@ -253,7 +254,7 @@
     var singularize = function (name, callback) {
         var singularized = null;
         arrayForEach(pluralEndings, function (ending) {
-            append = ending.use;
+            var append = ending.use;
             ending = ending.end || ending;
             if (name.endsWith(ending)) {
                 singularized = name.substring(0, name.length - ending.length);
@@ -285,7 +286,7 @@
     var preCheckConstructorNames = function () {
         var flagged = [];
         var nestedPreCheck = function (root) {
-            if (root === undefined || root.__fcnChecked || root === window) return;
+            if (root == null || root.__fcnChecked || root === window) return;
 
             root.__fcnChecked = true;
             if (root.__fcnChecked === undefined) return;
@@ -318,6 +319,7 @@
         var funcNameRegex = /function (.{1,})\(/;
         var results = (funcNameRegex).exec(constructor.toString());
         var name = (results && results.length > 1) ? results[1] : undefined;
+        var index;
 
         var excluded = false;
         arrayForEach(defaults.excludeConstructorNames, function (exclude) {
@@ -325,12 +327,13 @@
                 excluded = true;
                 return false;
             }
+            return true;
         });
 
         if (name === undefined || excluded) {
             var flagged = [];
             var nestedFind = function (root) {
-                if (root === null ||
+                if (root == null ||
                     root === window.document ||
                     root === window.html ||
                     root === window.history || // fixes security exception
@@ -351,7 +354,7 @@
                 }
                 flagged.push(root);
 
-                for (var index in root) {
+                for (index in root) {
                     var item = root[index];
                     if (item === constructor) {
                         return index;
@@ -370,9 +373,10 @@
                 if (name !== undefined) {
                     return false;
                 }
+                return true;
             });
 
-            for (var index in flagged) {
+            for (index in flagged) {
                 delete flagged[index].__fcnChecked;
             }
         }
