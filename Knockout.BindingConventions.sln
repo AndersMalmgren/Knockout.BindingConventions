@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2010
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Src", "Src", "{F5F0F8FD-0297-40B3-B10E-56D432EC2208}"
 	ProjectSection(SolutionItems) = preProject
 		src\Knockout.BindingConventions.js = src\Knockout.BindingConventions.js
@@ -10,6 +10,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{C767A0B3-7
 	ProjectSection(SolutionItems) = preProject
 		test\buttonTest.js = test\buttonTest.js
 		test\foreachTest.js = test\foreachTest.js
+		test\imageTest.js = test\imageTest.js
 		test\inputTest.js = test\inputTest.js
 		test\nameAttributeTest.js = test\nameAttributeTest.js
 		test\optionsTest.js = test\optionsTest.js
