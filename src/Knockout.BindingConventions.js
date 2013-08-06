@@ -192,7 +192,7 @@
     };
 
     ko.bindingConventions.conventionBinders.text = {
-        rules: [function (name, element, bindings, unwrapped, type) { return type !== "object" && type !== "boolean" && element.tagName !== "INPUT" && element.tagName !== "TEXTAREA" && !nodeHasContent(element); } ],
+        rules: [function (name, element, bindings, unwrapped, type) { return type !== "object" && type !== "boolean" && element.tagName !== "IMG" && element.tagName !== "INPUT" && element.tagName !== "TEXTAREA" && !nodeHasContent(element); } ],
         apply: function (name, element, bindings, unwrapped, type, data) {
             bindings.text = data;
         },
@@ -245,6 +245,14 @@
             } else {
                 bindings.template.data = actualModel;
             }
+        },
+        deferredApplyIfDataNotSet: true
+    };
+
+    ko.bindingConventions.conventionBinders.image = {
+        rules: [function (name, element, bindings, unwrapped, type) { return type === "string" && element.tagName === "IMG"; } ],
+        apply: function (name, element, bindings, unwrapped, type, data) {
+            bindings.attr = { src: data };
         },
         deferredApplyIfDataNotSet: true
     };
@@ -400,6 +408,7 @@
     ko.bindingConventions.utils = {
         findConstructorName: findConstructorName,
         singularize: singularize,
-        getPascalCased: getPascalCased
+        getPascalCased: getPascalCased,
+        nodeHasContent: nodeHasContent
     };
 })(window, ko);
