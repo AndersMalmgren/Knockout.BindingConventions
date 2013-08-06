@@ -1,26 +1,34 @@
 module("Name attribute Binding provider tests");
 
-
-var nameAtttributeTest = function (html, conventionBinding) {
+var nameAtttributeTestBase = function (html, model, assert) {
     var template = $(html);
     template.appendTo($("body"));
+    try {
+        ko.applyBindings(model, template[0]);
+        if (assert)
+            assert(template);
+    } catch (err) {
+        throw err;
+    } finally {
+        template.remove();
+    }
+};
 
+var nameAtttributeTest = function (html) {
     var clicked = 0;
     var model = { save: function () { clicked++ } };
-    ko.applyBindings(model, template[0]);
-
-    (template.is("button") ? template : template.find("button")).click();
-    equal(clicked, 1);
-
-    template.remove();
-}
+    nameAtttributeTestBase(html, model, function(template) {
+        (template.is("button") ? template : template.find("button")).click();
+        equal(clicked, 1);
+    });
+};
 
 test("When using the Name attribute", function () {
-    nameAtttributeTest("<button data-name='save'>Test</button>", true);
+    nameAtttributeTest("<button data-name='save'>Test</button>");
 });
 
 test("When using a standard data-bind", function () {
-    nameAtttributeTest("<div><button data-bind='click: save'>Test</button></div>", false);
+    nameAtttributeTest("<div><button data-bind='click: save'>Test</button></div>");
 });
 
 function NameAttributeTestViewModel() {
@@ -33,4 +41,24 @@ test("When using the Name attribute from a virtual element", function () {
     equal(template.find("#bound").length, 1);
 
     template.remove();
+});
+
+test("When using the Name attribute and member is undefined (Issue #2)", function () {
+    try {
+        var model = {};
+        nameAtttributeTestBase("<div data-name='fooMember'></div>", model);
+    } catch (err) {
+        ok(err.indexOf("fooMember") >= 0, "It should fail with meaningfull exception");
+    }
+});
+
+test("When using the Name attribute and member has a null value (Issue #2)", function () {
+    try {
+        var model = { fooMember: null };
+        nameAtttributeTestBase("<div data-name='fooMember'></div>", model);
+    } catch (err) {
+        ok(false, "It should not throw error");
+    }
+
+    ok(true);
 });
