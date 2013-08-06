@@ -408,6 +408,7 @@
     ko.bindingConventions.utils = {
         findConstructorName: findConstructorName,
         singularize: singularize,
-        getPascalCased: getPascalCased
+        getPascalCased: getPascalCased,
+        nodeHasContent: nodeHasContent
     };
 })(window, ko);
