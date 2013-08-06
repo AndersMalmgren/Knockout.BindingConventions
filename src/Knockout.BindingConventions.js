@@ -82,8 +82,11 @@
 
     var setBindingsByConvention = function (name, element, bindingContext, bindings) {
         var data = bindingContext[name] ? bindingContext[name] : bindingContext.$data[name];
-        if (data == null) {
+        if (data === undefined) {
             data = getDataFromComplexObjectQuery(name, bindingContext.$data);
+        }
+        if (data === undefined) {
+            throw "Can't resolve member: " + name;
         }
         var unwrapped = ko.utils.unwrapObservable(data);
         var type = typeof unwrapped;
