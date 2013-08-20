@@ -57,10 +57,10 @@
         nodeHasBindings: function (node) {
             return this.orgNodeHasBindings(node) || this.getMemberName(node) !== null;
         },
-        getBindings: function (node, bindingContext) {
+        getBindingAccessors: function (node, bindingContext) {
             var name = this.getMemberName(node);
 
-            var result = ko.bindingHandlers[name] ? null : this.orgBindingProvider.getBindings(node, bindingContext);
+            var result = (name != null && node.nodeType === 8) ? null : this.orgBindingProvider.getBindingAccessors(node, bindingContext);
             if (name != null) {
                 result = result || {};
                 setBindingsByConvention(name, node, bindingContext, result);
@@ -81,14 +81,18 @@
     };
 
     var setBindingsByConvention = function (name, element, bindingContext, bindings) {
-        var data = bindingContext[name] ? bindingContext[name] : bindingContext.$data[name];
+        var dataFn = bindingContext[name] ?
+                function() { return bindingContext[name]; } :
+                function() { return bindingContext.$data[name]; };
+        var data = dataFn();
         if (data === undefined) {
-            data = getDataFromComplexObjectQuery(name, bindingContext.$data);
+            dataFn = function() { return getDataFromComplexObjectQuery(name, bindingContext.$data); };
+            data = dataFn();
         }
         if (data === undefined) {
             throw "Can't resolve member: " + name;
         }
-        var unwrapped = ko.utils.unwrapObservable(data);
+        var unwrapped = ko.utils.peekObservable(data);
         var type = typeof unwrapped;
         var convention = element.__bindingConvention;
 
@@ -102,10 +106,10 @@
                     }
 
                     if (convention.rules.length == 1) {
-                        should = convention.rules[0](name, element, bindings, unwrapped, type, data, bindingContext.$data, bindingContext);
+                        should = convention.rules[0](name, element, bindings, unwrapped, type, data, bindingContext);
                     } else {
                         arrayForEach(convention.rules, function (rule) {
-                            should = should && rule(name, element, bindings, unwrapped, type, data, bindingContext.$data, bindingContext);
+                            should = should && rule(name, element, bindings, unwrapped, type, data, bindingContext);
                         });
                     }
 
@@ -118,83 +122,80 @@
         }
         if (element.__bindingConvention === undefined && unwrapped != null) throw "No convention was found for " + name;
         if (element.__bindingConvention !== undefined) {
-            element.__bindingConvention.apply(name, element, bindings, unwrapped, type, data, bindingContext.$data, bindingContext);
+            element.__bindingConvention.apply(name, element, bindings, unwrapped, type, dataFn, bindingContext);
+        } else if (unwrapped == null && ko.isObservable(data)) {
+            // To support deferred bindings, we need to set up a one-time subscription to apply the binding later
+            var deferSubscription = data.subscribe(function(newValue) {
+                if (newValue != null) {
+                    deferSubscription.dispose();
+                    var bindings = {};
+                    setBindingsByConvention(name, element, bindingContext, bindings);
+                    ko.applyBindingAccessorsToNode(element, bindings, bindingContext);
+                }
+            });
+
         }
     };
 
     ko.bindingConventions.conventionBinders.button = {
         rules: [function (name, element, bindings, unwrapped, type) { return element.tagName === "BUTTON" && type === "function"; } ],
-        apply: function (name, element, bindings, unwrapped, type, data, viewModel) {
-            bindings.click = unwrapped;
+        apply: function (name, element, bindings, unwrapped, type, dataFn, bindingContext) {
+            bindings.click = dataFn;
 
-            var guard = viewModel["can" + getPascalCased(name)];
-            if (guard !== undefined)
-                bindings.enable = guard;
+            setBinding(bindings, 'enable', "can" + getPascalCased(name), bindingContext);
         }
     };
 
     ko.bindingConventions.conventionBinders.options = {
-        rules: [function (name, element, bindings, options) { return element.tagName === "SELECT" && options.push; } ],
-        apply: function (name, element, bindings, options, type, data, viewModel) {
-            bindings.options = options;
+        rules: [function (name, element, bindings, unwrapped) { return element.tagName === "SELECT" && unwrapped.push; } ],
+        apply: function (name, element, bindings, unwrapped, type, dataFn, bindingContext) {
+            bindings.options = dataFn;
             var selectedMemberFound = false;
-            var guard;
 
             singularize(name, function (singularized) {
                 var pascalCasedItemName = getPascalCased(singularized);
-                var selected = viewModel["selected" + pascalCasedItemName];
-
-                if (selected === undefined) return false;
-
-                bindings.value = selected;
-                guard = viewModel["canChangeSelected" + pascalCasedItemName];
-                if (guard !== undefined) {
-                    bindings.enable = guard;
+                if (setBinding(bindings, 'value', "selected" + pascalCasedItemName, bindingContext)) {
+                    setBinding(bindings, 'enable', "canChangeSelected" + pascalCasedItemName, bindingContext);
+                    selectedMemberFound = true;
+                    return true;
                 }
-                selectedMemberFound = true;
-                return true;
             });
 
             if (selectedMemberFound) return;
 
             var pascalCased = getPascalCased(name);
-            bindings.selectedOptions = viewModel["selected" + pascalCased];
-            guard = viewModel["canChangeSelected" + pascalCased];
-            if (guard !== undefined) {
-                bindings.enable = guard;
-            }
+            setBinding(bindings, 'selectedOptions', "selected" + pascalCased, bindingContext);
+            setBinding(bindings, 'enable', "canChangeSelected" + pascalCased, bindingContext);
         }
     };
 
     ko.bindingConventions.conventionBinders.input = {
         rules: [function (name, element) { return element.tagName === "INPUT" || element.tagName === "TEXTAREA"; } ],
-        apply: function (name, element, bindings, unwrapped, type, data, viewModel) {
+        apply: function (name, element, bindings, unwrapped, type, dataFn, bindingContext) {
             if (type === "boolean") {
                 if (ko.utils.ieVersion === undefined) {
-                    bindings.attr = { type: "checkbox" };
+                    element.setAttribute("type", "checkbox");
                 }
-                bindings.checked = data;
+                bindings.checked = dataFn;
             } else {
-                bindings.value = data;
+                bindings.value = dataFn;
             }
 
-            var guard = viewModel["canChange" + getPascalCased(name)];
-            if (guard !== undefined)
-                bindings.enable = guard;
+            setBinding(bindings, 'enable', "canChange" + getPascalCased(name), bindingContext);
         }
     };
 
     ko.bindingConventions.conventionBinders.visible = {
         rules: [function (name, element, bindings, unwrapped, type) { return type === "boolean" && element.tagName !== "INPUT"; } ],
-        apply: function (name, element, bindings, unwrapped, type, data) {
-            bindings.visible = data;
+        apply: function (name, element, bindings, unwrapped, type, dataFn) {
+            bindings.visible = dataFn;
         }
     };
 
     ko.bindingConventions.conventionBinders.text = {
         rules: [function (name, element, bindings, unwrapped, type) { return type !== "object" && type !== "boolean" && element.tagName !== "IMG" && element.tagName !== "INPUT" && element.tagName !== "TEXTAREA" && !nodeHasContent(element); } ],
-        apply: function (name, element, bindings, unwrapped, type, data) {
-            bindings.text = data;
+        apply: function (name, element, bindings, unwrapped, type, dataFn) {
+            bindings.text = dataFn;
         },
         deferredApplyIfDataNotSet: true
     };
@@ -205,56 +206,70 @@
             (unwrapped == null || unwrapped.push === undefined) &&
             nodeHasContent(element);
         } ],
-        apply: function (name, element, bindings, unwrapped, type, data) {
-            bindings["with"] = data;
+        apply: function (name, element, bindings, unwrapped, type, dataFn) {
+            bindings["with"] = dataFn;
         }
     };
 
     ko.bindingConventions.conventionBinders.foreach = {
-        rules: [function (name, element, bindings, array) { return array && array.push && nodeHasContent(element); } ],
-        apply: function (name, element, bindings, array, type, data) {
-            bindings.foreach = data;
+        rules: [function (name, element, bindings, unwrapped) { return unwrapped && unwrapped.push && nodeHasContent(element); } ],
+        apply: function (name, element, bindings, unwrapped, type, dataFn) {
+            bindings.foreach = dataFn;
         }
     };
 
     ko.bindingConventions.conventionBinders.template = {
-        rules: [function (name, element, bindings, actualModel, type) { return type === "object" && !nodeHasContent(element); } ],
-        apply: function (name, element, bindings, actualModel, type, model) {
-            var isArray = actualModel != null && actualModel.push !== undefined;
-            var isDeferred = actualModel == null || (isArray && actualModel.length == 0);
+        rules: [function (name, element, bindings, unwrapped, type) { return type === "object" && !nodeHasContent(element); } ],
+        apply: function (name, element, bindings, unwrapped, type, dataFn) {
+            bindings.template = function() {
+                var actualModel = ko.unwrap(dataFn());
+                var isArray = actualModel != null && actualModel.push !== undefined;
+                var isDeferred = actualModel == null || (isArray && actualModel.length == 0);
 
-            var template = null;
-            if (!isDeferred) {
-                var className = actualModel ? findConstructorName(isArray ? actualModel[0] : actualModel) : undefined;
-                var modelEndsWith = "Model";
-                if (className != null && className.endsWith(modelEndsWith)) {
-                    template = className.substring(0, className.length - modelEndsWith.length);
-                    if (!template.endsWith("View")) {
-                        template = template + "View";
+                var template = null;
+                if (!isDeferred) {
+                    var className = actualModel ? findConstructorName(isArray ? actualModel[0] : actualModel) : undefined;
+                    var modelEndsWith = "Model";
+                    if (className != null && className.endsWith(modelEndsWith)) {
+                        template = className.substring(0, className.length - modelEndsWith.length);
+                        if (!template.endsWith("View")) {
+                            template = template + "View";
+                        }
+                    }
+
+                    if (template == null) {
+                        throw "View name could not be found";
                     }
                 }
 
-                if (template == null) {
-                    throw "View name could not be found";
+                var binding = { name: template, 'if': actualModel };
+                if (isArray) {
+                    binding.foreach = actualModel;
+                } else {
+                    binding.data = actualModel;
                 }
-            }
-
-            bindings.template = { name: template, 'if': model };
-            if (isArray) {
-                bindings.template.foreach = actualModel;
-            } else {
-                bindings.template.data = actualModel;
-            }
+                return binding;
+            };
         },
         deferredApplyIfDataNotSet: true
     };
 
     ko.bindingConventions.conventionBinders.image = {
         rules: [function (name, element, bindings, unwrapped, type) { return type === "string" && element.tagName === "IMG"; } ],
-        apply: function (name, element, bindings, unwrapped, type, data) {
-            bindings.attr = { src: data };
+        apply: function (name, element, bindings, unwrapped, type, dataFn) {
+            bindings.attr = function() {
+                return { src: dataFn() };
+            };
         },
         deferredApplyIfDataNotSet: true
+    };
+
+    var setBinding = function(bindings, bindingName, dataName, bindingContext) {
+        if (bindingContext.$data[dataName] !== undefined) {
+            return (bindings[bindingName] = function() {
+                return bindingContext.$data[dataName];
+            });
+        }
     };
 
     var getPascalCased = function (text) {
@@ -409,6 +424,7 @@
         findConstructorName: findConstructorName,
         singularize: singularize,
         getPascalCased: getPascalCased,
-        nodeHasContent: nodeHasContent
+        nodeHasContent: nodeHasContent,
+        setBinding: setBinding
     };
 })(window, ko);
