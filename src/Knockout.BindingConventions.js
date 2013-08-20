@@ -2,8 +2,8 @@
 // (c) Anders Malmgren - https://github.com/AndersMalmgren/Knockout.BindingConventions
 // License: MIT (http://www.opensource.org/licenses/mit-license.php)
 (function (window, ko) {
-    if (window.ko === undefined) {
-        throw "This library is dependant on Knockout";
+    if (window.ko === undefined || ko.version < "3.0") {
+        throw "This library is dependant on Knockout 3.0+";
     }
 
     String.prototype.endsWith = String.prototype.endsWith ? String.prototype.endsWith : function (suffix) {
