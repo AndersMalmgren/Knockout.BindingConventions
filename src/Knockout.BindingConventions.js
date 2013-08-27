@@ -60,7 +60,7 @@
         getBindings: function (node, bindingContext) {
             var name = this.getMemberName(node);
 
-            var result = ko.bindingHandlers[name] ? null : this.orgBindingProvider.getBindings(node, bindingContext);
+            var result = (name != null && node.nodeType === 8) ? null : this.orgBindingProvider.getBindings(node, bindingContext);
             if (name != null) {
                 result = result || {};
                 setBindingsByConvention(name, node, bindingContext, result);
