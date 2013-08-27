@@ -62,3 +62,10 @@ test("When using the Name attribute and member has a null value (Issue #2)", fun
 
     ok(true);
 });
+
+test("When using standard data-bind together with name attribute and member is named as a binding", function () {
+    var model = { text: "Test" };
+    nameAtttributeTestBase("<div data-name='text' data-bind='visible: false'></div>", model, function (element) {
+        ok(element.is(":hidden"), "data-bind binding should have been applied");
+    });
+});
