@@ -305,8 +305,20 @@
     };
 
     var nodeHasContent = function (node) {
-        return (node.nodeType === 8 && node.nextSibling.nodeType === 1) ||
-            (node.nodeType === 1 && node.innerHTML.trim() !== "");
+        if (node.__nodeHasContent !== undefined) return node.__nodeHasContent;
+
+        return node.__nodeHasContent = (node.nodeType === node.COMMENT_NODE && (node.nextSibling.nodeType === node.ELEMENT_NODE || hasContentBeforeEndTag(node))) ||
+            (node.nodeType === node.ELEMENT_NODE && node.innerHTML.trim() !== "");
+    };
+
+    var hasContentBeforeEndTag = function (node) {
+        if (node.nextSibling.nodeType === node.COMMENT_NODE && node.nextSibling.textContent.indexOf("/ko") > -1)
+            return false;
+
+        if (node.nextSibling.nodeType === node.nextSibling.ELEMENT_NODE || node.nextSibling.textContent.trim() !== "")
+            return true;
+
+        return hasContentBeforeEndTag(node.nextSibling);
     };
 
     var preCheckConstructorNames = function () {
