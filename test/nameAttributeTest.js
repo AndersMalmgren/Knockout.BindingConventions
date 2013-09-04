@@ -71,14 +71,15 @@ test("When using standard data-bind together with name attribute and member is n
 });
 
 
-var virtualElementContentTest = function(content, shouldApplyTemplateBinding) {
-    var template = "<!-- ko name: items -->" + content + "<!-- /ko -->";
+var virtualElementContentTest = function (content, shouldApplyTemplateBinding, appendContent) {
+    expect(shouldApplyTemplateBinding ? 1 : 0);
+    var template = "<!-- ko name: items -->" + content + "<!-- /ko -->" + (appendContent || "");
 
     var convention = ko.bindingConventions.conventionBinders.template;
     var orgApply = convention.apply;
 
     convention.apply = function () {
-        ok(shouldApplyTemplateBinding, "Template binding (Empty element)");
+        ok(true, "Template binding should be applied");
     };
 
     nameAtttributeTestBase(template, { items: [1, 2] });
@@ -95,4 +96,12 @@ test("When using a virtual element without content but newline", function () {
 
 test("When using a virtual element without content", function () {
     virtualElementContentTest("", true);
+});
+
+test("When using a virtual element without content", function () {
+    virtualElementContentTest("", true);
+});
+
+test("When using a virtual element without content but with sibling element", function () {
+    virtualElementContentTest("", true, "<div></div>");
 });
