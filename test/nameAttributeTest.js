@@ -70,10 +70,29 @@ test("When using standard data-bind together with name attribute and member is n
     });
 });
 
-test("When using a virtual element with content", function () {
-    var template = "<!-- ko name: items -->\r\n<div>Foo</div>\r\n<!-- /ko -->";
 
-    nameAtttributeTestBase(template, { items: [1, 2] }, function (element) {
-        equal(element.html(), "FooFoo");
-    });
+var virtualElementContentTest = function(content, shouldApplyTemplateBinding) {
+    var template = "<!-- ko name: items -->" + content + "<!-- /ko -->";
+
+    var convention = ko.bindingConventions.conventionBinders.template;
+    var orgApply = convention.apply;
+
+    convention.apply = function () {
+        ok(shouldApplyTemplateBinding, "Template binding (Empty element)");
+    };
+
+    nameAtttributeTestBase(template, { items: [1, 2] });
+    convention.apply = orgApply;
+};
+
+test("When using a virtual element with content", function () {
+    virtualElementContentTest("\r\n<div>Foo</div>\r\n", false);
+});
+
+test("When using a virtual element without content but newline", function () {
+    virtualElementContentTest("\r\n", true);
+});
+
+test("When using a virtual element without content", function () {
+    virtualElementContentTest("", true);
 });
