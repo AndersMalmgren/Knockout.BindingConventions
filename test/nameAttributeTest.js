@@ -69,3 +69,11 @@ test("When using standard data-bind together with name attribute and member is n
         ok(element.is(":hidden"), "data-bind binding should have been applied");
     });
 });
+
+test("When using a virtual element with content", function () {
+    var template = "<!-- ko name: items -->\r\n<div>Foo</div>\r\n<!-- /ko -->";
+
+    nameAtttributeTestBase(template, { items: [1, 2] }, function (element) {
+        equal(element.html(), "FooFoo");
+    });
+});
