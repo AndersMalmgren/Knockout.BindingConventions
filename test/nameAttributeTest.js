@@ -103,10 +103,6 @@ test("When using a virtual element without content", function () {
     virtualElementContentTest("", true);
 });
 
-test("When using a virtual element without content", function () {
-    virtualElementContentTest("", true);
-});
-
 test("When using a virtual element without content but with sibling element", function () {
     virtualElementContentTest("", true, "<div></div>");
 });
