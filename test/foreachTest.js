@@ -38,7 +38,7 @@
             ok(true, "It should use template convention");
         }
 
-        ko.virtualElementTest("$data", undefined, model, function () {
+        ko.virtualElementTest("$data", "", model, function () {
 
         });
 

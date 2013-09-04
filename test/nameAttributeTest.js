@@ -10,6 +10,7 @@ var nameAtttributeTestBase = function (html, model, assert) {
     } catch (err) {
         throw err;
     } finally {
+        template.siblings().not("#qunit").remove();
         template.remove();
     }
 };
@@ -92,6 +93,10 @@ test("When using a virtual element with content", function () {
 
 test("When using a virtual element without content but newline", function () {
     virtualElementContentTest("\r\n", true);
+});
+
+test("When using a virtual element without content but double newline", function () {
+    virtualElementContentTest("\r\n\r\n", true);
 });
 
 test("When using a virtual element without content", function () {
