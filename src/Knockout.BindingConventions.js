@@ -74,7 +74,11 @@
     var getDataFromComplexObjectQuery = function (name, context) {
         var parts = name.split(".");
         for (var i = 0; i < parts.length; i++) {
-            context = context[parts[i]];
+            var value = context[parts[i]];
+            if (i != parts.length - 1)
+                value = ko.utils.unwrapObservable(value);
+
+            context = value;
         }
 
         return context;
