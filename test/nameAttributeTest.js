@@ -106,3 +106,19 @@ test("When using a virtual element without content", function () {
 test("When using a virtual element without content but with sibling element", function () {
     virtualElementContentTest("", true, "<div></div>");
 });
+
+test("When data-name is supplied a complex object path that consists of observables", function () {
+    var expectedValue = "val";
+    nameAtttributeTestBase("<div data-name='prop.name'></div>", { prop: ko.observable({ name: expectedValue }) }, function (element) {
+        equal(element.html(), expectedValue, "It should have unwrapped the value correctly");
+    });
+});
+
+test("When data-name is supplied a complex object path that consists of observables and bound value is also a observable", function () {
+    var expectedValue = "val";
+    var model = { prop: ko.observable({ name: ko.observable() }) };
+    nameAtttributeTestBase("<div data-name='prop.name'></div>", model, function (element) {
+        model.prop().name(expectedValue);
+        equal(element.html(), expectedValue, "It should have unwrapped the value correctly");
+    });
+});
