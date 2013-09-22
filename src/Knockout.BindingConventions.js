@@ -74,9 +74,17 @@
     var getDataFromComplexObjectQuery = function (name, context) {
         var parts = name.split(".");
         for (var i = 0; i < parts.length; i++) {
-            var value = context[parts[i]];
+            var part = parts[i];
+            var value = context[part];
             if (i != parts.length - 1)
                 value = ko.utils.unwrapObservable(value);
+            else {
+                return {
+                    data: value,
+                    context: context,
+                    name: part
+                };
+            }
 
             context = value;
         }
@@ -85,17 +93,23 @@
     };
 
     var setBindingsByConvention = function (name, element, bindingContext, bindings) {
-        var dataFn = bindingContext[name] ?
-                function() { return bindingContext[name]; } :
-                function() { return bindingContext.$data[name]; };
-        var data = dataFn();
+        var data = bindingContext[name] ? bindingContext[name] : bindingContext.$data[name];
+        var context = bindingContext.$data;
+
         if (data === undefined) {
-            dataFn = function() { return getDataFromComplexObjectQuery(name, bindingContext.$data); };
-            data = dataFn();
+            var result = getDataFromComplexObjectQuery(name, context);
+            data = result.data;
+            bindingContext = { $data: result.context };
+            name = result.name;
         }
+
         if (data === undefined) {
             throw "Can't resolve member: " + name;
         }
+
+        var dataFn = function() {
+            return data;
+        };
         var unwrapped = ko.utils.peekObservable(data);
         var type = typeof unwrapped;
         var convention = element.__bindingConvention;
@@ -155,36 +169,45 @@
         apply: function (name, element, bindings, unwrapped, type, dataFn, bindingContext) {
             bindings.options = dataFn;
             var selectedMemberFound = false;
+            var bindingName = null;
+            var selected = null;
 
             singularize(name, function (singularized) {
                 var pascalCasedItemName = getPascalCased(singularized);
-                if (setBinding(bindings, 'value', "selected" + pascalCasedItemName, bindingContext)) {
+                bindingName = "value";
+                selected = setBinding(bindings, bindingName, "selected" + pascalCasedItemName, bindingContext);
+                if (selected) {
                     setBinding(bindings, 'enable', "canChangeSelected" + pascalCasedItemName, bindingContext);
                     selectedMemberFound = true;
                     return true;
                 }
             });
 
-            if (selectedMemberFound) return;
+            if (!selectedMemberFound) {
+                var pascalCased = getPascalCased(name);
+                bindingName = "selectedOptions";
+                selected = setBinding(bindings, bindingName, "selected" + pascalCased, bindingContext);
+                setBinding(bindings, 'enable', "canChangeSelected" + pascalCased, bindingContext);
+            }
 
-            var pascalCased = getPascalCased(name);
-            setBinding(bindings, 'selectedOptions', "selected" + pascalCased, bindingContext);
-            setBinding(bindings, 'enable', "canChangeSelected" + pascalCased, bindingContext);
+            applyMemberWriter(bindings, bindingName, selected, name, bindingContext);
         }
     };
 
     ko.bindingConventions.conventionBinders.input = {
         rules: [function (name, element) { return element.tagName === "INPUT" || element.tagName === "TEXTAREA"; } ],
         apply: function (name, element, bindings, unwrapped, type, dataFn, bindingContext) {
+            var bindingName = null;
             if (type === "boolean") {
                 if (ko.utils.ieVersion === undefined) {
                     element.setAttribute("type", "checkbox");
                 }
-                bindings.checked = dataFn;
+                bindingName = "checked";
             } else {
-                bindings.value = dataFn;
+                bindingName = "value";
             }
-
+            bindings[bindingName] = dataFn;
+            applyMemberWriter(bindings, bindingName, dataFn, name, bindingContext);
             setBinding(bindings, 'enable', "canChange" + getPascalCased(name), bindingContext);
         }
     };
@@ -323,6 +346,26 @@
             return true;
 
         return hasContentBeforeEndTag(node.nextSibling);
+    };
+    
+    var applyMemberWriter = function (bindings, bindingName, accessor, memberName, bindingContext) {
+        if (!ko.isObservable(accessor())) {
+            getMemberWriters(bindings)[bindingName] = function (value) {
+                bindingContext.$data[memberName] = value;
+            };
+        }
+    };
+
+    var getMemberWriters = function(bindings) {
+        var propertyWriters = null;
+        if (bindings._ko_property_writers === undefined) {
+            propertyWriters = {};
+            bindings._ko_property_writers = function () {
+                return propertyWriters;
+            };
+        }
+
+        return propertyWriters;
     };
 
     var preCheckConstructorNames = function () {
