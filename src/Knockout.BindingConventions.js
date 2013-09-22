@@ -74,9 +74,17 @@
     var getDataFromComplexObjectQuery = function (name, context) {
         var parts = name.split(".");
         for (var i = 0; i < parts.length; i++) {
-            var value = context[parts[i]];
+            var part = parts[i];
+            var value = context[part];
             if (i != parts.length - 1)
                 value = ko.utils.unwrapObservable(value);
+            else {
+                return {
+                    data: value,
+                    context: context,
+                    name: part
+                };
+            }
 
             context = value;
         }
@@ -86,8 +94,13 @@
 
     var setBindingsByConvention = function (name, element, bindingContext, bindings) {
         var data = bindingContext[name] ? bindingContext[name] : bindingContext.$data[name];
+        var context = bindingContext.$data;
+
         if (data === undefined) {
-            data = getDataFromComplexObjectQuery(name, bindingContext.$data);
+            var result = getDataFromComplexObjectQuery(name, context);
+            data = result.data;
+            context = result.context;
+            name = result.name;
         }
         if (data === undefined) {
             throw "Can't resolve member: " + name;
@@ -106,10 +119,10 @@
                     }
 
                     if (convention.rules.length == 1) {
-                        should = convention.rules[0](name, element, bindings, unwrapped, type, data, bindingContext.$data, bindingContext);
+                        should = convention.rules[0](name, element, bindings, unwrapped, type, data, context, bindingContext);
                     } else {
                         arrayForEach(convention.rules, function (rule) {
-                            should = should && rule(name, element, bindings, unwrapped, type, data, bindingContext.$data, bindingContext);
+                            should = should && rule(name, element, bindings, unwrapped, type, data, context, bindingContext);
                         });
                     }
 
@@ -122,7 +135,7 @@
         }
         if (element.__bindingConvention === undefined && unwrapped != null) throw "No convention was found for " + name;
         if (element.__bindingConvention !== undefined) {
-            element.__bindingConvention.apply(name, element, bindings, unwrapped, type, data, bindingContext.$data, bindingContext);
+            element.__bindingConvention.apply(name, element, bindings, unwrapped, type, data, context, bindingContext);
         }
     };
 
@@ -143,14 +156,16 @@
             bindings.options = options;
             var selectedMemberFound = false;
             var guard;
+            var bindingName = null;
+            var selected = null;
 
             singularize(name, function (singularized) {
                 var pascalCasedItemName = getPascalCased(singularized);
-                var selected = viewModel["selected" + pascalCasedItemName];
+                selected = viewModel["selected" + pascalCasedItemName];
 
                 if (selected === undefined) return false;
 
-                bindings.value = selected;
+                bindingName = "value";
                 guard = viewModel["canChangeSelected" + pascalCasedItemName];
                 if (guard !== undefined) {
                     bindings.enable = guard;
@@ -159,28 +174,37 @@
                 return true;
             });
 
-            if (selectedMemberFound) return;
+            if (!selectedMemberFound) {
+                var pascalCased = getPascalCased(name);
+                selected = viewModel["selected" + pascalCased];
+                bindingName = "selectedOptions";
 
-            var pascalCased = getPascalCased(name);
-            bindings.selectedOptions = viewModel["selected" + pascalCased];
-            guard = viewModel["canChangeSelected" + pascalCased];
-            if (guard !== undefined) {
-                bindings.enable = guard;
+                guard = viewModel["canChangeSelected" + pascalCased];
+                if (guard !== undefined) {
+                    bindings.enable = guard;
+                }
             }
+
+            bindings[bindingName] = selected;
+            applyMemberWriter(bindings, bindingName, selected, name, viewModel);
         }
     };
 
     ko.bindingConventions.conventionBinders.input = {
         rules: [function (name, element) { return element.tagName === "INPUT" || element.tagName === "TEXTAREA"; } ],
         apply: function (name, element, bindings, unwrapped, type, data, viewModel) {
+            var bindingName = null;
             if (type === "boolean") {
                 if (ko.utils.ieVersion === undefined) {
                     bindings.attr = { type: "checkbox" };
                 }
-                bindings.checked = data;
+                bindingName = "checked";
             } else {
-                bindings.value = data;
+                bindingName = "value";
             }
+
+            bindings[bindingName] = data;
+            applyMemberWriter(bindings, bindingName, data, name, viewModel);
 
             var guard = viewModel["canChange" + getPascalCased(name)];
             if (guard !== undefined)
@@ -334,6 +358,16 @@
         arrayForEach(flagged, function (flag) {
             delete flag.__fcnChecked;
         });
+    };
+
+    var applyMemberWriter = function(bindings, bindingName, accessor, memberName, context) {
+        if(!ko.isObservable(accessor)) {
+            bindings._ko_property_writers = bindings._ko_property_writers || {};
+
+            bindings._ko_property_writers[bindingName] = function(value) {
+                context[memberName] = value;
+            };
+        }
     };
 
     var findConstructorName = function (obj, isConstructor) {
