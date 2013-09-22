@@ -52,4 +52,28 @@
             equal($(input).is(":disabled"), false, "Textbox should be enabled");
         });
     });
+    
+    test("When binding against a input and value is non observable Issue #4", function () {
+        var model = { value: null };
+        var expectedValue = "foo";
+
+        ko.test("input", "value", model, function (input) {
+            input.val(expectedValue);
+            input.change();
+
+            equal(model.value, expectedValue, "Model should reflect value");
+        });
+    });
+    
+    test("When binding complex member path against a input and value is non observable Issue #4", function () {
+        var model = { sub: { value: null } };
+        var expectedValue = "foo";
+
+        ko.test("input", "sub.value", model, function (input) {
+            input.val(expectedValue);
+            input.change();
+
+            equal(model.sub.value, expectedValue, "Model should reflect value");
+        });
+    });
 })(window.ko, window.equal, window.jQuery);
