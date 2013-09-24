@@ -5,6 +5,16 @@
         this.options = ko.observableArray(["1", "2", "3"]);
         this.selectedOption = ko.observable();
     };
+    
+    OptionsNonObservableViewModel = function () {
+        this.options = ko.observableArray(["1", "2", "3"]);
+        this.selectedOption = null;
+    };
+
+    MultiOptionsNonObserViewModel = function () {
+        this.options = ko.observableArray(["1", "2", "3"]);
+        this.selectedOptions = null;
+    };
 
     MultiOptionsViewModel = function () {
         this.options = ko.observableArray(["1", "2", "3"]);
@@ -35,7 +45,7 @@
 
     var optionsTest = function (assert, model, multi, convention) {
         var model = model ? new model : new OptionsViewModel();
-        convention = convention || "options"
+        convention = convention || "options";
 
         ko.test("select", convention, model, function (select, args) {
             select.attr("multiple", multi !== undefined);
@@ -105,5 +115,22 @@
         optionsTest(function (select) {
             equal(select.is(":disabled"), true, "It should deny selection");
         }, GuardMultiOptionsViewModel, true);
+    });
+    
+    test("When selecting an option on a non observable model", function () {
+        optionsTest(function (select, model) {
+            select.val("3");
+            select.change();
+            equal(model.selectedOption, "3", "It should be reflected on model");
+        }, OptionsNonObservableViewModel, false);
+    });
+    
+    test("When selecting multiple options on a non observable model", function () {
+        optionsTest(function (select, model) {
+            var selected = ["3", "2"];
+            select.val(selected);
+            select.change();
+            equal(model.selectedOptions.length, selected.length, "It should be reflected on model");
+        }, MultiOptionsNonObserViewModel, true);
     });
 })();
