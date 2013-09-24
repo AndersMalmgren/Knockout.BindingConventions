@@ -171,11 +171,13 @@
             var selectedMemberFound = false;
             var bindingName = null;
             var selected = null;
+            var selectedName = null;
 
             singularize(name, function (singularized) {
                 var pascalCasedItemName = getPascalCased(singularized);
                 bindingName = "value";
-                selected = setBinding(bindings, bindingName, "selected" + pascalCasedItemName, bindingContext);
+                selectedName = "selected" + pascalCasedItemName;
+                selected = setBinding(bindings, bindingName, selectedName, bindingContext);
                 if (selected) {
                     setBinding(bindings, 'enable', "canChangeSelected" + pascalCasedItemName, bindingContext);
                     selectedMemberFound = true;
@@ -186,11 +188,12 @@
             if (!selectedMemberFound) {
                 var pascalCased = getPascalCased(name);
                 bindingName = "selectedOptions";
-                selected = setBinding(bindings, bindingName, "selected" + pascalCased, bindingContext);
+                selectedName = "selected" + pascalCased;
+                selected = setBinding(bindings, bindingName, selectedName, bindingContext);
                 setBinding(bindings, 'enable', "canChangeSelected" + pascalCased, bindingContext);
             }
 
-            applyMemberWriter(bindings, bindingName, selected, name, bindingContext);
+            applyMemberWriter(bindings, bindingName, selected, selectedName, bindingContext);
         }
     };
 
