@@ -158,10 +158,12 @@
             var guard;
             var bindingName = null;
             var selected = null;
+            var selectedName = null;
 
             singularize(name, function (singularized) {
                 var pascalCasedItemName = getPascalCased(singularized);
-                selected = viewModel["selected" + pascalCasedItemName];
+                selectedName = "selected" + pascalCasedItemName;
+                selected = viewModel[selectedName];
 
                 if (selected === undefined) return false;
 
@@ -176,7 +178,8 @@
 
             if (!selectedMemberFound) {
                 var pascalCased = getPascalCased(name);
-                selected = viewModel["selected" + pascalCased];
+                selectedName = "selected" + pascalCased;
+                selected = viewModel[selectedName];
                 bindingName = "selectedOptions";
 
                 guard = viewModel["canChangeSelected" + pascalCased];
@@ -186,7 +189,7 @@
             }
 
             bindings[bindingName] = selected;
-            applyMemberWriter(bindings, bindingName, selected, name, viewModel);
+            applyMemberWriter(bindings, bindingName, selected, selectedName, viewModel);
         }
     };
 
