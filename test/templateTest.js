@@ -98,8 +98,8 @@
       }
     });
 
-    var templateTest = function (model, name, convention, assert, prepElement) {
-        var template = $("<script id='" + name + "' type='text/html'>Bound</script>");
+    var templateTest = function (model, name, convention, assert, prepElement, template) {
+        var template = template || $("<script id='" + name + "' type='text/html'>Bound</script>");
 
         $("body").append(template);
 
@@ -200,5 +200,18 @@
         templateTest(new MyApp.MyViewModel(), "MyView", undefined, undefined, function(element) {
             element.html("  \r\n");
         });
+    });
+    
+    test("When binding a template to a model and then to a new model of different type", function () {
+        var templates = $('<div><script id="MyView" type="text/html">MyView</script><script id="OOExtendedView" type="text/html">OOExtendedViewModel</script></div>');
+        var model = {
+            test: ko.observable(new MyApp.MyViewModel())
+        };
+
+        ko.bindingConventions.init({ roots: [MyApp] });
+        templateTest(model, undefined, "test", function (element) {
+            model.test(new MyApp.OOExtendedViewModel());
+            equal(element.html(), "OOExtendedViewModel", "It should update the view with latest model");
+        }, undefined, templates);
     });
 })();
