@@ -13,7 +13,7 @@
     <copyright>Copyright 2013</copyright>
     <tags>Knockout MVVM Binding Convention MVC ViewModel Presentation Model-View-ViewModel Caliburn</tags>
     <dependencies>
-      <dependency id="knockoutjs" version="2.3.0" />
+      <dependency id="knockoutjs" version="3.0.0" />
     </dependencies>
   </metadata>
 </package>
