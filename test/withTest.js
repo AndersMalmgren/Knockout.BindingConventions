@@ -36,8 +36,9 @@
             }
         }
 
-        ko.test("div", "with", { "with": ko.observable(model) }, function (element) {
-            test(element, model);
+        var parent = { "with": ko.observable(model) };
+        ko.test("div", "with", parent, function (element) {
+            test(element, model, parent);
         }, prepElement);
     }
 
@@ -59,8 +60,12 @@
     });
 
     test("When 'with' binding null to a element with content", function () {
-        elementTest(true, function (element, model) {
-            ok(element[0].__bindingConvention === ko.bindingConventions.conventionBinders["with"], "It should use the with binding");
+        var expected = "foobar";
+
+        elementTest(true, function (element, model, parent) {
+            equal(element.html(), "", "It should not render any content");
+            parent.with({ value: expected });
+            ok(element.html().indexOf(expected) !== -1, "It should use the with binding");
         }, true);
     });
 })();

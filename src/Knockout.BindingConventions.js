@@ -112,35 +112,33 @@
         };
         var unwrapped = ko.utils.peekObservable(data);
         var type = typeof unwrapped;
-        var convention = element.__bindingConvention;
+        var foundConvention = null;
+        for (var index in ko.bindingConventions.conventionBinders) {
+            if (ko.bindingConventions.conventionBinders[index].rules !== undefined) {
+                var convention = ko.bindingConventions.conventionBinders[index];
+                var should = true;
+                if (unwrapped == null && convention.deferredApplyIfDataNotSet === true) {
+                    continue;
+                }
 
-        if (convention === undefined) {
-            for (var index in ko.bindingConventions.conventionBinders) {
-                if (ko.bindingConventions.conventionBinders[index].rules !== undefined) {
-                    convention = ko.bindingConventions.conventionBinders[index];
-                    var should = true;
-                    if (unwrapped == null && convention.deferredApplyIfDataNotSet === true) {
-                        continue;
-                    }
+                if (convention.rules.length == 1) {
+                    should = convention.rules[0](name, element, bindings, unwrapped, type, data, bindingContext);
+                } else {
+                    arrayForEach(convention.rules, function(rule) {
+                        should = should && rule(name, element, bindings, unwrapped, type, data, bindingContext);
+                    });
+                }
 
-                    if (convention.rules.length == 1) {
-                        should = convention.rules[0](name, element, bindings, unwrapped, type, data, bindingContext);
-                    } else {
-                        arrayForEach(convention.rules, function (rule) {
-                            should = should && rule(name, element, bindings, unwrapped, type, data, bindingContext);
-                        });
-                    }
-
-                    if (should) {
-                        element.__bindingConvention = convention;
-                        break;
-                    }
+                if (should) {
+                    foundConvention = convention;
+                    break;
                 }
             }
         }
-        if (element.__bindingConvention === undefined && unwrapped != null) throw "No convention was found for " + name;
-        if (element.__bindingConvention !== undefined) {
-            element.__bindingConvention.apply(name, element, bindings, unwrapped, type, dataFn, bindingContext);
+
+        if (foundConvention === null && unwrapped != null) throw "No convention was found for " + name;
+        if (foundConvention !== null) {
+            foundConvention.apply(name, element, bindings, unwrapped, type, dataFn, bindingContext);
         } else if (unwrapped == null && ko.isObservable(data)) {
             // To support deferred bindings, we need to set up a one-time subscription to apply the binding later
             var deferSubscription = data.subscribe(function(newValue) {
