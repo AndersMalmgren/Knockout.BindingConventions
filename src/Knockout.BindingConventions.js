@@ -217,7 +217,7 @@
         rules: [function (name, element, bindings, unwrapped, type) { return type === "boolean" && element.tagName !== "INPUT"; } ],
         apply: function(name, element, bindings, unwrapped, type, dataFn) {
             if (element.nodeType === element.COMMENT_NODE) {
-                bindings.if = dataFn;
+                bindings["if"] = dataFn;
             } else {
                 bindings.visible = dataFn;
             }
