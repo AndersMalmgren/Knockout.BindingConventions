@@ -215,8 +215,12 @@
 
     ko.bindingConventions.conventionBinders.visible = {
         rules: [function (name, element, bindings, unwrapped, type) { return type === "boolean" && element.tagName !== "INPUT"; } ],
-        apply: function (name, element, bindings, unwrapped, type, dataFn) {
-            bindings.visible = dataFn;
+        apply: function(name, element, bindings, unwrapped, type, dataFn) {
+            if (element.nodeType === element.COMMENT_NODE) {
+                bindings.if = dataFn;
+            } else {
+                bindings.visible = dataFn;
+            }
         }
     };
 

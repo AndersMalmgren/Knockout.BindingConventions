@@ -27,4 +27,10 @@
     test("When binding against a input", function () {
         visibleTest("input", true);
     });
+
+    test("WHen binding against a virtual element", function() {
+        ko.virtualElementTest("visible", "<div>Bar</div>", new VisibleViewModel(), function(element) {
+            ok(element.html().indexOf("Bar") === -1, "It should hide the content inside the virtual element");
+        });
+    });
 })();
