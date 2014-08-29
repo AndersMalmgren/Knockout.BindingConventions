@@ -7,7 +7,9 @@
                 element.remove();
             }
         };
-        test(element, args);
+        if (test) {
+            test(element, args);
+        }
 
         if (!args.async) {
             args.clean();

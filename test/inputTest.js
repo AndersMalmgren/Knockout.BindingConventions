@@ -76,4 +76,30 @@
             equal(model.sub.value, expectedValue, "Model should reflect value");
         });
     });
+
+    test("When binding to a string with use useTextInputBinding: true", function () {
+        textInputTest(true);
+    });
+
+    test("When binding to a string with use useTextInputBinding: false", function () {
+        textInputTest(false);
+    });
+
+    var textInputTest = function (useTextInputBinding) {
+        var binding = useTextInputBinding ? ko.bindingHandlers.textInput : ko.bindingHandlers.value;
+
+        var model = new InputViewModel();
+        
+        ko.bindingConventions.init({ useTextInputBinding: useTextInputBinding });
+        var org = binding.init;
+
+        binding.init = function () {
+            ok(true, "It should use correct binding");
+            binding.init = org;
+            ko.bindingConventions.init({ useTextInputBinding: false });
+        }
+
+        ko.test("input", "value", model);
+    };
+
 })(window.ko, window.equal, window.jQuery);

@@ -16,9 +16,11 @@
 
     var defaults = {
         roots: [window],
-        excludeConstructorNames: ["Class"]
+        excludeConstructorNames: ["Class"],
+        useTextInputBinding: false
     };
 
+    var textValueBinding = null;
     var prechecked = false;
     ko.bindingConventions = {
         init: function (options) {
@@ -205,7 +207,7 @@
                 }
                 bindingName = "checked";
             } else {
-                bindingName = "value";
+                bindingName = textValueBinding;
             }
             bindings[bindingName] = dataFn;
             applyMemberWriter(bindings, bindingName, dataFn, name, bindingContext);
@@ -480,6 +482,8 @@
             preCheckConstructorNames();
             prechecked = true;
         }
+
+        textValueBinding = defaults.useTextInputBinding ? "textInput" : "value";
 
         orgApplyBindings(viewModel, element);
     };
