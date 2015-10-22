@@ -262,7 +262,7 @@
 
                 var template = null;
                 if (!isDeferred) {
-	                template = viewLocator.instance.getView(isArray ? actualModel[0] : actualModel);
+                    template = viewLocator.instance.getView(isArray ? actualModel[0] : actualModel);
 
                     if (template == null) {
                         throw "View name could not be found";
@@ -472,29 +472,29 @@
     var viewLocator = function () {
     };
     viewLocator.prototype = {
-		init: function() {
-			preCheckConstructorNames();
-		},
-    	getView: function (viewModel) {
-    		var className = findConstructorName(viewModel);
-    		var modelEndsWith = "Model";
-    		var template = null;
-    		if (className != null && className.endsWith(modelEndsWith)) {
-    			template = className.substring(0, className.length - modelEndsWith.length);
-    			if (!template.endsWith("View")) {
-    				template = template + "View";
-    			}
-    		}
-		    return template;
-	    }
+        init: function() {
+            preCheckConstructorNames();
+        },
+        getView: function (viewModel) {
+            var className = findConstructorName(viewModel);
+            var modelEndsWith = "Model";
+            var template = null;
+            if (className != null && className.endsWith(modelEndsWith)) {
+                template = className.substring(0, className.length - modelEndsWith.length);
+                if (!template.endsWith("View")) {
+                    template = template + "View";
+                }
+            }
+            return template;
+        }
     }
     viewLocator.instance = new viewLocator();
-	ko.bindingConventions.viewLocator = viewLocator;
+    ko.bindingConventions.viewLocator = viewLocator;
 
     var orgApplyBindings = ko.applyBindings;
     ko.applyBindings = function (viewModel, element) {
-    	if (prechecked === false && viewLocator.instance.init) {
-		    viewLocator.instance.init();
+        if (prechecked === false && viewLocator.instance.init) {
+            viewLocator.instance.init();
             prechecked = true;
         }
 
