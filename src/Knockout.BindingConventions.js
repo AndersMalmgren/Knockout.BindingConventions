@@ -16,9 +16,11 @@
 
     var defaults = {
         roots: [window],
-        excludeConstructorNames: ["Class"]
+        excludeConstructorNames: ["Class"],
+        useTextInputBinding: false
     };
 
+    var textValueBinding = null;
     var prechecked = false;
     ko.bindingConventions = {
         init: function (options) {
@@ -121,11 +123,12 @@
                     continue;
                 }
 
-                if (convention.rules.length == 1) {
+                if (convention.rules.length === 1) {
                     should = convention.rules[0](name, element, bindings, unwrapped, type, data, bindingContext);
                 } else {
                     arrayForEach(convention.rules, function(rule) {
                         should = should && rule(name, element, bindings, unwrapped, type, data, bindingContext);
+                        return should;
                     });
                 }
 
@@ -205,7 +208,7 @@
                 }
                 bindingName = "checked";
             } else {
-                bindingName = "value";
+                bindingName = textValueBinding;
             }
             bindings[bindingName] = dataFn;
             applyMemberWriter(bindings, bindingName, dataFn, name, bindingContext);
@@ -260,14 +263,7 @@
 
                 var template = null;
                 if (!isDeferred) {
-                    var className = actualModel ? findConstructorName(isArray ? actualModel[0] : actualModel) : undefined;
-                    var modelEndsWith = "Model";
-                    if (className != null && className.endsWith(modelEndsWith)) {
-                        template = className.substring(0, className.length - modelEndsWith.length);
-                        if (!template.endsWith("View")) {
-                            template = template + "View";
-                        }
-                    }
+                    template = viewLocator.instance.getView(isArray ? actualModel[0] : actualModel);
 
                     if (template == null) {
                         throw "View name could not be found";
@@ -474,12 +470,36 @@
         return name;
     };
 
+    var viewLocator = function () {
+    };
+    viewLocator.prototype = {
+        init: function() {
+            preCheckConstructorNames();
+        },
+        getView: function (viewModel) {
+            var className = findConstructorName(viewModel);
+            var modelEndsWith = "Model";
+            var template = null;
+            if (className != null && className.endsWith(modelEndsWith)) {
+                template = className.substring(0, className.length - modelEndsWith.length);
+                if (!template.endsWith("View")) {
+                    template = template + "View";
+                }
+            }
+            return template;
+        }
+    }
+    viewLocator.instance = new viewLocator();
+    ko.bindingConventions.viewLocator = viewLocator;
+
     var orgApplyBindings = ko.applyBindings;
     ko.applyBindings = function (viewModel, element) {
-        if (prechecked === false) {
-            preCheckConstructorNames();
+        if (prechecked === false && viewLocator.instance.init) {
+            viewLocator.instance.init();
             prechecked = true;
         }
+
+        textValueBinding = defaults.useTextInputBinding ? "textInput" : "value";
 
         orgApplyBindings(viewModel, element);
     };
