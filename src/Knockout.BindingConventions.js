@@ -123,11 +123,12 @@
                     continue;
                 }
 
-                if (convention.rules.length == 1) {
+                if (convention.rules.length === 1) {
                     should = convention.rules[0](name, element, bindings, unwrapped, type, data, bindingContext);
                 } else {
                     arrayForEach(convention.rules, function(rule) {
                         should = should && rule(name, element, bindings, unwrapped, type, data, bindingContext);
+                        return should;
                     });
                 }
 
